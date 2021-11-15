@@ -1,0 +1,75 @@
+\documentclass[10pt,twoside,a4paper,fleqn]{report}
+\usepackage{etex} % required for tikz figures
+\usepackage[english,st]{rpg} % select type {semester}/bachelor/master thesis: {st}/bt/mt
+
+% Page header (don't change)____________________________________________________
+\setlength{\parindent}{0em}                 % Disable parindent
+\rhead[\nouppercase{\rightmark}]{\thepage}  % Special headings
+\lhead[\thepage]{\nouppercase{\leftmark}}   % Special headings
+\cfoot{}                                    % Special headings
+
+%%%%%%%% Hint %%%%%%%%%%%
+% Define your custom stuff here, e.g. Symbols that you are using. If you define them here it is easy to change them later on if you run into a nomenclature conflict.
+\newcommand{\mysymbol}[0]{\mathbf{S}_{my}}   % custom symbol which can easily be changed if necessary
+\newcommand{\bomega}[0]{\boldsymbol{\omega}} % bold greek letter
+\newcommand{\bSymb}[1]{\mathbf{#1}}			% toy example with one argument
+
+% tikz plots
+\pgfplotsset{compat=newest}
+\pgfplotsset{plot coordinates/math parser=false}
+\pgfplotsset{yticklabel style={text width=2em,align=right}}
+\newlength\fheight
+\newlength\fwidth
+
+% Figures from Inkscape
+\graphicspath{{img//}}
+
+% Title page (please fill in)___________________________________________________
+\title{Collaborative Aerial Transportation Using Deep Reinforcement Learning}
+
+\studentA{David Oort Alonso}
+\ethidA{18-909-176}
+\emailA{oodavid@student.ethz.ch}
+
+% \studentB{Second Student}
+% \ethidB{12-345-678}
+% \semesterB{9}
+% \emailB{second@student.ethz.ch}
+
+\supervision{Dr. Sihao Sun \\ Yunlong Song\\ Prof. Dr. Davide Scaramuzza}
+\date{\today}
+
+\infopage
+\declaration
+
+% Begin document________________________________________________________________
+\begin{document}
+\maketitle 							      % Create title page
+
+% Preamble______________________________________________________________________
+\pagenumbering{roman} 				% Begin roman page numbering (i,ii,...)
+\input{chapters/0_preamble}
+
+% Chapters______________________________________________________________________
+\pagestyle{fancy}             % Fancy headings
+\pagenumbering{arabic}				% Begin arabic page numbering (1,2,...)
+
+\input{chapters/1_introduction}
+\input{chapters/2_scientific_writing}
+\input{chapters/3_latex}
+\input{chapters/4_notation}
+\input{chapters/5_experiments}
+\input{chapters/6_discussion}
+
+\cleardoublepage
+
+% Appendix______________________________________________________________________
+\appendix
+\input{chapters/10_appendix}
+
+% Bibliography__________________________________________________________________
+
+\bibliographystyle{plain}
+\bibliography{bibtex/references.bib}
+
+\end{document}
