@@ -1,4 +1,4 @@
-function E = estimateEssentialMatrix(p1, p2, K1, K2)
+function E = estimateEssentialMatrixx(p1, p2, K1, K2)
 % estimateEssentialMatrix_normalized: estimates the essential matrix
 % given matching point coordinates, and the camera calibration K
 %

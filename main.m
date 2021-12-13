@@ -4,7 +4,7 @@
 clear all;
 close all;
 clc;
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ds = 1; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking'
 kitti_path = 'data/kitti'
 
@@ -14,6 +14,7 @@ if ds == 0
     ground_truth = load([kitti_path '/poses/05.txt']);
     ground_truth = ground_truth(:, [end-8 end]);
     last_frame = 4540;
+
     K = [7.188560000000e+02 0 6.071928000000e+02
         0 7.188560000000e+02 1.852157000000e+02
         0 0 1];
@@ -30,7 +31,7 @@ elseif ds == 1
 elseif ds == 2
     
     % Path containing images, depths and all...
-    assert(exist('datasets/parking', 'dir') ~= 0);
+%     assert(exist('datasets/parking', 'dir') ~= 0);
     last_frame = 598;
     K = load([parking_path '/K.txt']);
      
@@ -43,7 +44,6 @@ end
 %% Bootstrap
 % need to set bootstrap_frames
 bootstrap_frames = [1 3]
-bootstrap_frames(1)
 if ds == 0
     img0 = imread([kitti_path '/05/image_0/' ...
         sprintf('%06d.png',bootstrap_frames(1))]);
@@ -67,70 +67,114 @@ else
 end
 
 
-args.corner_patch_size =9;
+args.corner_patch_size = 15;
 args.harris_kappa = 0.08;
-args.num_keypoints = 1000;
-args.nonmaximum_supression_radius = 8;
-args.descriptor_radius = 9;
-args.match_lambda = 5;
+args.num_keypoints = 600;
+args.nonmaximum_supression_radius = 9;
+args.descriptor_radius = 11;
+args.match_lambda = 7;
 args.K = K;
+
 
 harris_scores_0 = harris(img0, args);
 keypoints_0 = selectKeypoints(...
     harris_scores_0, args);
-descriptors_0 = describeKeypoints(img0, keypoints_0, args);
 
-harris_scores_1 = harris(img1, args);
-keypoints_1 = selectKeypoints(...
-    harris_scores_1, args);
-descriptors_1 = describeKeypoints(img1, keypoints_1, args);
+keypoints = keypoints_0 ;
+keypoints= flipud(keypoints)
 
+pointTracker = vision.PointTracker
+pointTracker = vision.PointTracker('MaxBidirectionalError',1);
 
-matches = matchDescriptors(descriptors_1, descriptors_0, args);
+initialize(pointTracker,keypoints',img0);
 
+keypoints_ini = keypoints
 
+for i = 1:bootstrap_frames(2)
+    if ds == 0
+        img = imread([kitti_path '/05/image_0/' ...
+            sprintf('%06d.png',i)]);
+    elseif ds == 1
+        img = rgb2gray(imread([malaga_path ...
+            '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
+            left_images(i).name]));
+    
+    elseif ds == 2
+        img = rgb2gray(imread([parking_path ...
+            sprintf('/images/img_%05d.png',i)]));
+    else
+        assert(false);
+    end
+  
+    [points,point_validity] = pointTracker(img);
 
-
-%% Load outlier-free point correspondences
-
-[~, query_indices, match_indices] = find(matches);
-
-matched_keypoints_1 = keypoints_1(:, query_indices);
-matched_keypoints_0 = keypoints_0(:, match_indices);
-
-
+end
+keypoints_end = points';
+keypoints_end= flipud(keypoints_end);
+keypoints_ini = flipud(keypoints_ini);
 figure(4);
 imshow(img1);
 hold on;
-plot(matched_keypoints_1(2, :), matched_keypoints_1(1, :), 'rx', 'Linewidth', 2);
+plot(keypoints_end(2, :), keypoints_end(1, :), 'rx', 'Linewidth', 2);
 
-plotMatches(matches, keypoints_1, keypoints_0);
+plotMatches(1:size(keypoints_end, 2), keypoints_end, keypoints_ini);
+
+matched_keypoints_0 = keypoints_ini(:, point_validity);
+matched_keypoints_1 = keypoints_end(:, point_validity);
+
 %% Estimate the essential matrix E using the 8-point algorithm
 
 
-F = estimateFundamentalMatrix(matched_keypoints_0', matched_keypoints_1');
 p1 = [matched_keypoints_0(2,:); matched_keypoints_0(1,:); ones(1, length(matched_keypoints_0))];
 p2 = [matched_keypoints_1(2,:); matched_keypoints_1(1,:); ones(1, length(matched_keypoints_1))];
 
-
 % Compute the essential matrix from the fundamental matrix given K
-E1 = K'*F*K
 
+
+% Option 1: Use Matlab built in function
+[F, mask] = estimateFundamentalMatrix(p1(1:2,:)', p2(1:2,:)');
+IntrinsicMatrix = K';
+radialDistortion = [0 0]; 
+cameraParams = cameraParameters('IntrinsicMatrix',IntrinsicMatrix); 
+[E1, mask] = estimateEssentialMatrix(p1(1:2,:)', p2(1:2,:)', cameraParams);
+
+% E1 = K'*F*K;
 % Option 2: Recycle code from exercise, but no RANSAC implemented
-E2 = estimateEssentialMatrix(p1,p2,K,K)
+E2 = estimateEssentialMatrixx(p1,p2,K,K);
 
-%% Extract the relative camera positions (R,T) from the essential matrix
+% Extract the relative camera positions (R,T) from the essential matrix
+
+p1_mask = p1(:, mask);
+p2_mask = p2(:, mask);
 
 % Obtain extrinsic parameters (R,t) from E
 [Rots,u3] = decomposeEssentialMatrix(E1);
 
 % Disambiguate among the four possible configurations
-[R_C2_W,T_C2_W] = disambiguateRelativePose(Rots,u3,p1,p2,K,K);
+[R_C2_W,T_C2_W] = disambiguateRelativePose(Rots,u3,p1_mask,p2_mask,K,K)
 
 % Triangulate a point cloud using the final transformation (R,T)
 M1 = K * eye(3,4);
 M2 = K * [R_C2_W, T_C2_W];
-P = linearTriangulation(p1,p2,M1,M2)
+
+P = triangulate(p1_mask(1:2,:)',p2_mask(1:2,:)',M1',M2');
+P = P';
+matched_keypoints_1_mask = matched_keypoints_1(:, mask);
+matched_keypoints_0_mask = matched_keypoints_0(:, mask);
+
+% perform RANSAC to find best Pose and inliers
+ [R_C2_W, T_C2_W, inlier_mask, max_num_inliers_history, num_iteration_history] = ...
+         ransacLocalization(matched_keypoints_1_mask, P(1:3,:), K);
+ 
+ [R_W_C2,T_W_C2, inlier_mask] = estimateWorldCameraPose(flipud(matched_keypoints_1_mask)',P(1:3,:)',cameraParams);
+
+ T_W_C2 = T_W_C2';
+ R_W_C2 = R_W_C2';
+ 
+ sum(inlier_mask)/length(inlier_mask)
+T_C2_W
+T_W_C2
+P;
 
 %% Visualize the 3-D scene
 figure(1),
@@ -168,30 +212,53 @@ plot(p2(1,:), p2(2,:), 'ys');
 title('Image 2')
 
 
-
 %% Continuous operation
 img_prev = img1;
-S_prev.P = [];
-S_prev.X = [];
-S_prev.C = [];
-S_prev.F = [];
-S_prev.T = [];
-S_prev.D = [];
+S_i.P = [];
+S_i.X = [];
+S_i.C = [];
+S_i.F = [];
+S_i.T = [];
+S_i.D= [];
 
 
-S_i = trackLandmarks(S_prev, img0, eye(3,4), args);
-S_prev = S_i;
-S_i = trackLandmarks(S_prev, img1, [R_C2_W, T_C2_W], args);
+pose_hist = [zeros(3,1)];
+n_tracked_hist = [0];
 
-pose_hist = [];
-n_tracked_hist = []
 
+for i = 1:size(p2_mask, 2)
+    S_i.C = [S_i.C p1_mask(1:2,i)];
+    S_i.F = [S_i.F p1_mask(1:2,i)];
+    S_i.T = [S_i.T reshape(eye(3,4), [12,1])];
+end
+images = cell(bootstrap_frames(2)-1,1);
+ for i = 1:bootstrap_frames(2)
+     if ds == 0
+        images{i} = imread([kitti_path '/05/image_0/' sprintf('%06d.png',i)]);
+    elseif ds == 1
+        images{i} = rgb2gray(imread([malaga_path ...
+            '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
+            left_images(i).name]));
+    elseif ds == 2
+        images{i} = im2uint8(rgb2gray(imread([parking_path ...
+            sprintf('/images/img_%05d.png',i)])));
+    else
+        assert(false);
+    end
+ 
+ end
+S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], args,0.1);
+plotCO(S_i, images{1}, pose_hist, n_tracked_hist, P);
+T_W_C2
+R_W_C2
+size(images, 1)
 range = (bootstrap_frames(2)+1):last_frame;
 for i = range
-    iter = i
+    iter = i;
     fprintf('\n\nProcessing frame %d\n=====================\n', i);
     if ds == 0
         image = imread([kitti_path '/05/image_0/' sprintf('%06d.png',i)]);
+        image_prev = imread([kitti_path '/05/image_0/' sprintf('%06d.png',i-1)]);
     elseif ds == 1
         image = rgb2gray(imread([malaga_path ...
             '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
@@ -199,38 +266,36 @@ for i = range
     elseif ds == 2
         image = im2uint8(rgb2gray(imread([parking_path ...
             sprintf('/images/img_%05d.png',i)])));
+        image_prev = im2uint8(rgb2gray(imread([parking_path ...
+            sprintf('/images/img_%05d.png',i-1)])));
     else
         assert(false);
     end
+
+    % P is a [4xN] matrix containing the triangulated point cloud (in
+    % homogeneous coordinates), given by the function linearTriangulation
     S_prev = S_i;
 
+    [S_i, T_WC_i] = processFrame(image, image_prev, S_i, args);
+    images = cell(2,1);
+    images{1} = image_prev;
+    images{2} = image;
 
+    S_i = trackLandmarksKLT(S_i, images, T_WC_i, args,0.5);
 
-
-    [S_i, T_WC_i] = processFrame(image, img_prev, S_prev, args);
-    size(T_WC_i)
     pose_hist = [pose_hist T_WC_i(:,4)];
+    n_tracked = length(S_i.X);
+    n_tracked_hist = [n_tracked_hist n_tracked];
 
-     figure(10);
-    imshow(image);
-    hold on;
-    plot(S_i.C(1, :), S_i.C(2, :), 'rx', 'Linewidth', 2);
 
-    plot(S_i.P(1, :), S_i.P(2, :), 'gx', 'Linewidth', 2);
     
-    figure(3)
-    plot(pose_hist(1, :), pose_hist(3, :));
-    hold on
-    plot(S_i.X(1,:), S_i.X(3,:), 'x')
-    hold off
+    if mod(iter,2) == 1
 
-    figure(5)
-    [~, n_tracked] = size(S_i.P);
-    n_tracked_hist = [n_tracked_hist n_tracked]
-  
-    plot(n_tracked_hist);
+     %S_i = trackLandmarks(S_i, image, T_WC_i, args);
+        plotCO(S_i, image, pose_hist, n_tracked_hist, P);
+    end
+    pause(.01);
+    
 
-    S_i = trackLandmarks(S_i, image, T_WC_i, args);
 
-    img_prev = image;
 end

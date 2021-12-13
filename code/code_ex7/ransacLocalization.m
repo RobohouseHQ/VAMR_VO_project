@@ -7,7 +7,7 @@ function [R_C_W, t_C_W, best_inlier_mask, max_num_inliers_history, num_iteration
 %   matched keypoints (!!!), 0 if the match is an outlier, 1 otherwise.
 
 use_p3p = true ;
-tweaked_for_more = false;
+tweaked_for_more = true;
 adaptive = true; % whether or not to use ransac adaptively
 
 if use_p3p
@@ -16,11 +16,11 @@ if use_p3p
     else
         num_iterations = 200;
     end
-    pixel_tolerance = 10;
+    pixel_tolerance = 3;
     k = 3;
 else
-    num_iterations = 10000;
-    pixel_tolerance = 10;
+    num_iterations = 1000;
+    pixel_tolerance = 3;
     k = 6;
 end
 
@@ -79,13 +79,12 @@ while num_iterations > i
           (R_C_W_guess(:,:,1) * corresponding_landmarks) + ...
           repmat(t_C_W_guess(:,:,1), ...
           [1 size(corresponding_landmarks, 2)]), K);
-
-     
    
 
     difference = matched_query_keypoints - projected_points;
     errors = sum(difference.^2, 1);
     is_inlier = errors < pixel_tolerance^2;
+    T = [R_C_W_guess(:,:,1) t_C_W_guess(:,:,1)];
     
     % If we use p3p, also consider inliers for the alternative solutions.
     if use_p3p
@@ -99,6 +98,7 @@ while num_iterations > i
             alternative_is_inlier = errors < pixel_tolerance^2;
             if nnz(alternative_is_inlier) > nnz(is_inlier)
                 is_inlier = alternative_is_inlier;
+                T = [R_C_W_guess(:,:,alt_idx+1) t_C_W_guess(:,:,alt_idx+1)];
             end
         end
     end
@@ -113,6 +113,7 @@ while num_iterations > i
             nnz(is_inlier) >= min_inlier_count
         max_num_inliers = nnz(is_inlier);        
         best_inlier_mask = is_inlier;
+        best_T = T;
     end
     
     if adaptive
@@ -143,6 +144,9 @@ else
         corresponding_landmarks(:, best_inlier_mask>0)', K);
     R_C_W = M_C_W(:, 1:3);
     t_C_W = M_C_W(:, end);
+
+    R_C_W = best_T(:,1:3);
+    t_C_W = best_T(:,4);
 end
 
 if adaptive
