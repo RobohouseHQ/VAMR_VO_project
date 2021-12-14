@@ -4,7 +4,7 @@
 clear all;
 close all;
 clc;
-ds = 1; % 0: KITTI, 1: Malaga, 2: parking
+ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking'
 kitti_path = 'data/kitti'
 
@@ -68,9 +68,9 @@ end
 
 
 args.corner_patch_size = 15;
-args.harris_kappa = 0.08;
-args.num_keypoints = 600;
-args.nonmaximum_supression_radius = 9;
+args.harris_kappa = 0.04;
+args.num_keypoints = 1000;
+args.nonmaximum_supression_radius = 11;
 args.descriptor_radius = 11;
 args.match_lambda = 7;
 args.K = K;
@@ -221,6 +221,9 @@ S_i.F = [];
 S_i.T = [];
 S_i.D= [];
 
+fh = figure(20)
+    fh.WindowState = 'maximized';
+pause(10)
 
 pose_hist = [zeros(3,1)];
 n_tracked_hist = [0];
@@ -289,11 +292,10 @@ for i = range
 
 
     
-    if mod(iter,2) == 1
+
 
      %S_i = trackLandmarks(S_i, image, T_WC_i, args);
         plotCO(S_i, image, pose_hist, n_tracked_hist, P);
-    end
     pause(.01);
     
 
