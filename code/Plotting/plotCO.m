@@ -1,4 +1,4 @@
-function processFrame(S_i, image, pose_hist, n_tracked_hist, P);
+function processFrame(S_i, image, pose_hist, n_tracked_hist, P, frame_number,ground_truth,plot_truth);
 
     % Plot
     height = 2; width = 4;
@@ -10,13 +10,13 @@ function processFrame(S_i, image, pose_hist, n_tracked_hist, P);
     imshow(image);
     hold on;
     plot(S_i.C(1, :), S_i.C(2, :), 'ro', 'Linewidth', 2);
-    plot(S_i.P(1, :), S_i.P(2, :), 'gx', 'Linewidth', 2);    
+    plot(S_i.P(1, :), S_i.P(2, :), 'gx', 'Linewidth', 2);
     hold off
     daspect([1 1 1])
     pbaspect([1 1 1])
-
-    title('Current Image') 
-
+    
+    title(['Frame number = ', num2str(frame_number)]);
+     
 
 
     % Trajectory + landmarks (top view)
@@ -35,7 +35,13 @@ function processFrame(S_i, image, pose_hist, n_tracked_hist, P);
 
     % Number of triangulated landmarks
     subplot(height,width,7)
-    plot(pose_hist(1, :), pose_hist(3, :));
+
+    plot(pose_hist(1, :), pose_hist(3, :)),'b';
+    hold on
+    if plot_truth
+        plot(ground_truth(1:length(pose_hist),1), ground_truth(1:length(pose_hist),2),'r');
+    end
+    hold off
     daspect([1 1 1])
     pbaspect([1 1 1])
     title('Full trajectory') 

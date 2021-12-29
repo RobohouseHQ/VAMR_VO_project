@@ -1,4 +1,4 @@
-function S_i = trackLandmarksKLT(S,images, T_WC_i, args, beta )
+function S_i = trackLandmarksKLT(S,images, T_WC_i, args, beta, ft)
     % S -> Current state
     % image -> Image we want to use to add landmarks
     % T_WC_i -> pose of camera that took image
@@ -6,10 +6,20 @@ function S_i = trackLandmarksKLT(S,images, T_WC_i, args, beta )
     % Get harris scores, keypoints and descriptors of the image we want to
     % use to add landmarks
 
-
     harris_scores = harris(images{size(images,1)}, args);
     keypoints_img = selectKeypoints(...
         harris_scores, args);
+    
+%     if ft == 5
+%         %SURF implementation 
+%         [kp, loc_kp] = computeSURFFeatures(images{size(images,1)},args);
+% 
+%         %Extracting the features
+%         [features, valid_kp] = extractFeatures(images{size(images,1)},kp);
+% 
+%         keypoints_img = (kp.Location);
+%         keypoints_img = keypoints_img';
+%     end
 
     F = [];
     C = [];
@@ -17,6 +27,7 @@ function S_i = trackLandmarksKLT(S,images, T_WC_i, args, beta )
 
     if size(S.C,2) == 0
         point_validity = zeros(args.num_keypoints,1);
+        %point_validity = zeros(length(keypoints_img),1);
     else
 
         keypoints_ini = S.C;
@@ -97,6 +108,7 @@ function S_i = trackLandmarksKLT(S,images, T_WC_i, args, beta )
 
     for i = 1:100
         r =  randi([1 args.num_keypoints]);
+        %r =  randi([1 length(keypoints_img)]);
         F =  [F flipud(keypoints_img(:, r))];
         T = [T reshape(T_WC_i,[12,1])];
         C = [C flipud(keypoints_img(:, r))];

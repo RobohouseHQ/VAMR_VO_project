@@ -1,0 +1,12 @@
+{
+  "TuningParameters": 
+    {
+        "corner_patch_size": 15,
+        "harris_kappa": 0.01,
+        "num_keypoints": 1000,
+	    "nonmaximum_supression_radius": 11,
+	    "descriptor_radius": 11,
+	    "match_lambda": 7
+    }
+    
+  }

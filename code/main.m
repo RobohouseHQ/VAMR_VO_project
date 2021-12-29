@@ -8,8 +8,7 @@ ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking'
 kitti_path = 'data/kitti05/kitti'
 malaga_path = 'G:/malaga-urban-dataset-extract-07'
-
-ft = 0; % 0:Harris 1:FAST 2:SURF
+plot_ground_truth = false;
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
@@ -44,9 +43,10 @@ else
     assert(false);
 end
 
+
 %% Bootstrap
 % need to set bootstrap_frames
-bootstrap_frames = [1 3];
+bootstrap_frames = [1 3]
 if ds == 0
     img0 = imread([kitti_path '/05/image_0/' ...
         sprintf('%06d.png',bootstrap_frames(1))]);
@@ -69,75 +69,19 @@ else
     assert(false);
 end
 
+%Load tuning parameters
+args = readJson(ds).TuningParameters;
 
-args.corner_patch_size = 15;
-args.harris_kappa = 0.04;
-args.num_keypoints = 1000;
-args.nonmaximum_supression_radius = 11;
-args.descriptor_radius = 11;
-args.match_lambda = 7;
+%K input (better way for this, will think about it, prob integrate in config)
 args.K = K;
 
-%FAST extension
-threshold = 3;
+%Feature Detection
+keypoints = detectKeypoints(img0,args)
 
-%SURF extension
-args.metric_threshold = 450;
-args.num_octaves = 4;
-args.num_scale_levels = 5;
-
-%% Harris detector
-
-if ft == 0
-    harris_scores_0 = harris(img0, args);
-    keypoints_0 = selectKeypoints(...
-        harris_scores_0, args);
-
-    keypoints = keypoints_0 ;
-    keypoints= flipud(keypoints);
-
-end
-%% FAST
-
-if ft == 1
-    
-    [kp0, loc_kp0] = computeFastFeatures(img0);
-    [kp1, loc_kp1] = computeFastFeatures(img1);
-    
-    %Extracting the features
-    [features0,valid_kp0] = extractFeatures(img0,kp0);
-    [features1,valid_kp1] = extractFeatures(img1,kp1);
-    
-    keypoints = kp0.Location;
-    keypoints = flipud(keypoints)';
-    
-end
-
-%% SURF
-
-if ft == 2
-    
-    [kp0, loc_kp0] = computeSURFFeatures(img0,args);
-    [kp1, loc_kp1] = computeSURFFeatures(img1,args);
-    
-    %Extracting the features
-    [features0,valid_kp0] = extractFeatures(img0,kp0);
-    [features1,valid_kp1] = extractFeatures(img1,kp1);
-    
-    keypoints = valid_kp0.Location;
-    keypoints = flipud(keypoints)';
-    
-end
-
-
-
-%% 
-pointTracker = vision.PointTracker;
+%Initialise KLT 
 pointTracker = vision.PointTracker('MaxBidirectionalError',1);
-
 initialize(pointTracker,keypoints',img0);
-
-keypoints_ini = keypoints;
+keypoints_ini = keypoints
 
 for i = 1:bootstrap_frames(2)
     if ds == 0
@@ -147,7 +91,6 @@ for i = 1:bootstrap_frames(2)
         img = rgb2gray(imread([malaga_path ...
             '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
             left_images(i).name]));
-    
     elseif ds == 2
         img = rgb2gray(imread([parking_path ...
             sprintf('/images/img_%05d.png',i)]));
@@ -158,108 +101,36 @@ for i = 1:bootstrap_frames(2)
     [points,point_validity] = pointTracker(img);
 
 end
-keypoints_end = points';
-keypoints_end = flipud(keypoints_end);
-keypoints_ini = flipud(keypoints_ini);
-%keypoints_ini = flipud(keypoints_ini)';
-figure(4);
-imshow(img1);
-hold on;
-plot(keypoints_end(2, :), keypoints_end(1, :), 'rx', 'Linewidth', 2);
 
-plotMatches(1:size(keypoints_end, 2), keypoints_end, keypoints_ini);
+keypoints_end = points';
+keypoints_end= flipud(keypoints_end);
+keypoints_ini = flipud(keypoints_ini);
+
+%Plot the image with the keypoints alone
+plotKeypoints(img1,keypoints_end, keypoints_ini);
 
 matched_keypoints_0 = keypoints_ini(:, point_validity);
 matched_keypoints_1 = keypoints_end(:, point_validity);
 
-%% Estimate the essential matrix E using the 8-point algorithm
-
+%% Triangulate and determine final pose 
 
 p1 = [matched_keypoints_0(2,:); matched_keypoints_0(1,:); ones(1, length(matched_keypoints_0))];
 p2 = [matched_keypoints_1(2,:); matched_keypoints_1(1,:); ones(1, length(matched_keypoints_1))];
 
 % Compute the essential matrix from the fundamental matrix given K
+[E, mask, cameraParams] = determineEssentialMatrix(p1,p2,K);
 
+%Determine final pose (with RANSAC)
+[R_C2_W, T_C2_W, T_W_C2, R_W_C2,inlier_mask,p1_mask, p2_mask, P] = extractFinalPose(p1,p2,mask,E,K,matched_keypoints_0,matched_keypoints_1,cameraParams)
 
-% Option 1: Use Matlab built in function
-[F, mask] = estimateFundamentalMatrix(p1(1:2,:)', p2(1:2,:)');
-IntrinsicMatrix = K';
-radialDistortion = [0 0]; 
-cameraParams = cameraParameters('IntrinsicMatrix',IntrinsicMatrix); 
-[E1, mask] = estimateEssentialMatrix(p1(1:2,:)', p2(1:2,:)', cameraParams);
+%Print for testing
+% sum(inlier_mask)/length(inlier_mask)
+% T_C2_W
+% T_W_C2
+% P;
 
-% E1 = K'*F*K;
-% Option 2: Recycle code from exercise, but no RANSAC implemented
-E2 = estimateEssentialMatrixx(p1,p2,K,K);
-
-% Extract the relative camera positions (R,T) from the essential matrix
-
-p1_mask = p1(:, mask);
-p2_mask = p2(:, mask);
-
-% Obtain extrinsic parameters (R,t) from E
-[Rots,u3] = decomposeEssentialMatrix(E1);
-
-% Disambiguate among the four possible configurations
-[R_C2_W,T_C2_W] = disambiguateRelativePose(Rots,u3,p1_mask,p2_mask,K,K)
-
-% Triangulate a point cloud using the final transformation (R,T)
-M1 = K * eye(3,4);
-M2 = K * [R_C2_W, T_C2_W];
-
-P = triangulate(p1_mask(1:2,:)',p2_mask(1:2,:)',M1',M2');
-P = P';
-matched_keypoints_1_mask = matched_keypoints_1(:, mask);
-matched_keypoints_0_mask = matched_keypoints_0(:, mask);
-
-% perform RANSAC to find best Pose and inliers
- [R_C2_W, T_C2_W, inlier_mask, max_num_inliers_history, num_iteration_history] = ...
-         ransacLocalization(matched_keypoints_1_mask, P(1:3,:), K);
- 
- [R_W_C2,T_W_C2, inlier_mask] = estimateWorldCameraPose(flipud(matched_keypoints_1_mask)',P(1:3,:)',cameraParams);
-
- T_W_C2 = T_W_C2';
- R_W_C2 = R_W_C2';
- 
- sum(inlier_mask)/length(inlier_mask)
-T_C2_W
-T_W_C2
-P;
-
-%% Visualize the 3-D scene
-figure(1),
-subplot(1,3,1)
-% R,T should encode the pose of camera 2, such that M1 = [I|0] and M2=[R|t]
-
-% P is a [4xN] matrix containing the triangulated point cloud (in
-% homogeneous coordinates), given by the function linearTriangulation
-plot3(P(1,:), P(2,:), P(3,:), 'o');
-
-% Display camera pose
-
-plotCoordinateFrame(eye(3),zeros(3,1), 0.8);
-text(-0.1,-0.1,-0.1,'Cam 1','fontsize',10,'color','k','FontWeight','bold');
-
-center_cam2_W = -R_C2_W'*T_C2_W;
-plotCoordinateFrame(R_C2_W',center_cam2_W, 0.8);
-text(center_cam2_W(1)-0.1, center_cam2_W(2)-0.1, center_cam2_W(3)-0.1,'Cam 2','fontsize',10,'color','k','FontWeight','bold');
-
-axis equal
-rotate3d on;
-grid
-
-% Display matched points
-subplot(1,3,2)
-imshow(img0,[]);
-hold on
-plot(p1(1,:), p1(2,:), 'ys');
-title('Image 1')
-
-subplot(1,3,3)
-imshow(img1,[]);
-hold on
-plot(p2(1,:), p2(2,:), 'ys');
-title('Image 2')
+%Visualise the 3D scene
+visualise3DScene(img0, img1, P, R_C2_W, T_C2_W, p1, p2)
 
 
 %% Continuous operation
@@ -284,6 +155,7 @@ for i = 1:size(p2_mask, 2)
     S_i.F = [S_i.F p1_mask(1:2,i)];
     S_i.T = [S_i.T reshape(eye(3,4), [12,1])];
 end
+
 images = cell(bootstrap_frames(2)-1,1);
  for i = 1:bootstrap_frames(2)
      if ds == 0
@@ -300,8 +172,9 @@ images = cell(bootstrap_frames(2)-1,1);
     end
  
  end
-S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], args,0.1,ft);
-plotCO(S_i, images{1}, pose_hist, n_tracked_hist, P,0);
+ 
+S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], args,0.1);
+plotCO(S_i, images{1}, pose_hist, n_tracked_hist, P,0,ground_truth,plot_ground_truth);
 T_W_C2
 R_W_C2
 size(images, 1)
@@ -327,8 +200,6 @@ for i = range
     else
         assert(false);
     end
-    
-    
 
     % P is a [4xN] matrix containing the triangulated point cloud (in
     % homogeneous coordinates), given by the function linearTriangulation
@@ -339,20 +210,14 @@ for i = range
     images{1} = image_prev;
     images{2} = image;
 
-    S_i = trackLandmarksKLT(S_i, images, T_WC_i, args,0.5,ft);
+    S_i = trackLandmarksKLT(S_i, images, T_WC_i, args,0.5);
 
     pose_hist = [pose_hist T_WC_i(:,4)];
     n_tracked = length(S_i.X);
     n_tracked_hist = [n_tracked_hist n_tracked];
 
-
-    
-
-
      %S_i = trackLandmarks(S_i, image, T_WC_i, args);
-        plotCO(S_i, image, pose_hist, n_tracked_hist, P,i);
+        plotCO(S_i, image, pose_hist, n_tracked_hist, P,i, ground_truth,plot_ground_truth);
     pause(.01);
     
-
-
 end
