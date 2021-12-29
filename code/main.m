@@ -2,7 +2,7 @@
 
 %% Setup
 clear all;
-close all;
+close all;gi
 clc;
 ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking'
