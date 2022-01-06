@@ -120,14 +120,7 @@ p2 = [matched_keypoints_1(2,:); matched_keypoints_1(1,:); ones(1, length(matched
 [E, mask, cameraParams] = determineEssentialMatrix(p1,p2,K);
 
 %Determine final pose (with RANSAC)
-%[R_C2_W, T_C2_W, T_W_C2, R_W_C2,inlier_mask,p1_mask, p2_mask, P] = extractFinalPose(p1,p2,mask,E,K,matched_keypoints_0,matched_keypoints_1,cameraParams)
 [R_C2_W, T_C2_W, T_W_C2, R_W_C2,p1_mask, p2_mask,P] = extractFinalPose (p1,p2,mask,E,K);
-
-%Print for testing
-% sum(inlier_mask)/length(inlier_mask)
-% T_C2_W
-% T_W_C2
-% P;
 
 %Visualise the 3D scene
 visualise3DScene(img0, img1, P, R_C2_W, T_C2_W, p1, p2)
