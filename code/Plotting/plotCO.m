@@ -1,4 +1,4 @@
-function processFrame(S_i, image, pose_hist, n_tracked_hist, P, frame_number,ground_truth,plot_truth);
+function plotCO(S_i, image, pose_hist, n_tracked_hist, P, frame_number,ground_truth,plot_truth);
 
     % Plot
     height = 2; width = 4;

@@ -2,7 +2,7 @@
 
 %% Setup
 clear all;
-close all;gi
+close all;
 clc;
 ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking'
@@ -43,9 +43,11 @@ else
     assert(false);
 end
 
+%Load tuning parameters
+args = readJson(ds).TuningParameters;
 
 %% Bootstrap
-% need to set bootstrap_frames
+%set bootstrap_frames
 bootstrap_frames = [1 3]
 if ds == 0
     img0 = imread([kitti_path '/05/image_0/' ...
@@ -69,9 +71,6 @@ else
     assert(false);
 end
 
-%Load tuning parameters
-args = readJson(ds).TuningParameters;
-
 %K input (better way for this, will think about it, prob integrate in config)
 args.K = K;
 
@@ -81,7 +80,7 @@ keypoints = detectKeypoints(img0,args)
 %Initialise KLT 
 pointTracker = vision.PointTracker('MaxBidirectionalError',1);
 initialize(pointTracker,keypoints',img0);
-keypoints_ini = keypoints
+keypoints_ini = keypoints;
 
 for i = 1:bootstrap_frames(2)
     if ds == 0
