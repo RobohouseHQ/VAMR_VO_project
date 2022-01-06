@@ -8,7 +8,7 @@ ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking'
 kitti_path = 'data/kitti05/kitti'
 malaga_path = 'G:/malaga-urban-dataset-extract-07'
-plot_ground_truth = false;
+plot_ground_truth = true;
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
@@ -91,7 +91,7 @@ for i = 1:bootstrap_frames(2)
             '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
             left_images(i).name]));
     elseif ds == 2
-        img = rgb2gray(imread([parking_path ...
+        img = rgb2gray(imread([parkin_path ...
             sprintf('/images/img_%05d.png',i)]));
     else
         assert(false);
@@ -120,7 +120,8 @@ p2 = [matched_keypoints_1(2,:); matched_keypoints_1(1,:); ones(1, length(matched
 [E, mask, cameraParams] = determineEssentialMatrix(p1,p2,K);
 
 %Determine final pose (with RANSAC)
-[R_C2_W, T_C2_W, T_W_C2, R_W_C2,inlier_mask,p1_mask, p2_mask, P] = extractFinalPose(p1,p2,mask,E,K,matched_keypoints_0,matched_keypoints_1,cameraParams)
+%[R_C2_W, T_C2_W, T_W_C2, R_W_C2,inlier_mask,p1_mask, p2_mask, P] = extractFinalPose(p1,p2,mask,E,K,matched_keypoints_0,matched_keypoints_1,cameraParams)
+[R_C2_W, T_C2_W, T_W_C2, R_W_C2,p1_mask, p2_mask,P] = extractFinalPose (p1,p2,mask,E,K);
 
 %Print for testing
 % sum(inlier_mask)/length(inlier_mask)
