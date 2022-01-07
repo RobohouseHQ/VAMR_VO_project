@@ -11,7 +11,7 @@ kitti_path = 'data/kitti';
 malaga_path = 'data/malaga-urban-dataset-extract-07';
 plot_ground_truth = true;
 
-% rng(0)
+rng(0)
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
@@ -74,7 +74,7 @@ end
 keypoints = detectKeypoints(img0, initArgs);
 
 %Initialise KLT
-pointTracker = vision.PointTracker('MaxBidirectionalError', 1);
+pointTracker = vision.PointTracker('MaxBidirectionalError', initArgs.max_bidir_err);
 initialize(pointTracker, keypoints', img0);
 keypoints_ini = keypoints;
 

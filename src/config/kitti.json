@@ -7,6 +7,7 @@
     "max_dist_new_lmk": 210,
     "min_dist_new_lmk": 0,
     "min_alpha_new_lmk": 0.1,
+    "max_bidir_err": 5,
     "K": [
       [
         7.188560000000e+02,
@@ -30,9 +31,10 @@
     "harris_kappa": 0.04,
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
-    "max_dist_new_lmk": 200,
-    "min_dist_new_lmk": 0,
+    "max_dist_new_lmk": 100,
+    "min_dist_new_lmk": 1,
     "min_alpha_new_lmk": 0.5,
+    "max_bidir_err": 0.5,
     "K": [
       [
         7.188560000000e+02,

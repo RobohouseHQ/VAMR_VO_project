@@ -15,7 +15,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
     if size(S.C, 2) ~= 0
 
         keypoints_ini = S.C;
-        pointTracker = vision.PointTracker('MaxBidirectionalError', .5);
+        pointTracker = vision.PointTracker('MaxBidirectionalError', args.max_bidir_err);
         initialize(pointTracker, keypoints_ini', images{1});
 
         for i = 2:size(images, 1)
