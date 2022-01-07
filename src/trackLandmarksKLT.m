@@ -82,7 +82,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         isFarEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) > args.min_dist_new_lmk;
 
         % Add new landmark if it's valid
-        if alpha > args.min_alpha_new_lmk && isInFront_curr && isInFront_first % && isCloseEnough && isFarEnough
+        if alpha > args.min_alpha_new_lmk %&& isInFront_curr && isInFront_first % && isCloseEnough && isFarEnough
             % add candidate keypoint to set of keypoints
             P = [P C(:, i)];
             % add landmark of keypoint to set of tracked landmarks

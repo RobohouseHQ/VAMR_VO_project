@@ -5,8 +5,6 @@ clc;
 path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
-% axis equal
-
 ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
