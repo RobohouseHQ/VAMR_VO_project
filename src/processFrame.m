@@ -6,9 +6,7 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
     
     P_database = S_prev.X;
     keypoints_database = S_prev.P;
-    
-    K = args.K;
-        
+            
     pointTracker = vision.PointTracker('MaxBidirectionalError',.5);
     initialize(pointTracker,keypoints_database',img_prev);
     [keypoints_query,point_validity] = pointTracker(img_i);
@@ -20,15 +18,13 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
     %perform RANSAC to find best Pose and inliers
 %     [R_C_W, t_C_W, inlier_mask, max_num_inliers_history, num_iteration_history] = ...
 %         ransacLocalization(flipud(matched_keypoints_query), matched_P_database, K);
-    IntrinsicMatrix = K';
-    cameraParams = cameraParameters('IntrinsicMatrix',IntrinsicMatrix); 
+    cameraParams = cameraParameters('IntrinsicMatrix',args.K'); 
     [R_WC,t_WC, inlier_mask] = estimateWorldCameraPose(matched_keypoints_query',matched_P_database',cameraParams);
     t_WC = t_WC';
     R_WC = R_WC';
     T_WC_i = [R_WC t_WC];
 
-    
-
+   
     disp('Estimated inlier ratio is');
     disp(nnz(inlier_mask)/numel(inlier_mask));
     

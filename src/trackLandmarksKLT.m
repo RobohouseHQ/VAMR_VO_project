@@ -74,10 +74,15 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
 
         v1 = point_3d(1:3) - T_WC_first(:, 4);
         v2 = point_3d(1:3) - T_WC_i(:, 4);
-        a = atan2d(norm(cross(v1, v2)), dot(v1, v2)); % Angle in degrees
+        alpha = atan2d(norm(cross(v1, v2)), dot(v1, v2)); % Angle in degrees
 
-        %TODO: add condition for distance of landmark
-        if a > args.min_alpha_new_lmk
+        isInFront_first = R_CW_first(3, :) * point_3d > -t_CW_first(3);
+        isInFront_curr = R_CW_i(3, :) * point_3d > -t_CW_i(3);
+        isCloseEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) < args.max_dist_new_lmk;
+        isFarEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) > args.min_dist_new_lmk;
+
+        % Add new landmark if it's valid
+        if alpha > args.min_alpha_new_lmk % && isInFront_curr && isInFront_first && isCloseEnough && isFarEnough
             % add candidate keypoint to set of keypoints
             P = [P C(:, i)];
             % add landmark of keypoint to set of tracked landmarks

@@ -4,8 +4,8 @@
     "harris_kappa": 0.04,
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
-    "max_distance_new_lmk": 40,
-    "min_distance_new_lmk": 1,
+    "max_dist_new_lmk": 40,
+    "min_dist_new_lmk": 1,
     "min_alpha_new_lmk": 0.1,
     "K": [
       [
@@ -30,8 +30,8 @@
     "harris_kappa": 0.04,
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
-    "max_distance_new_lmk": 40,
-    "min_distance_new_lmk": 1,
+    "max_dist_new_lmk": 40,
+    "min_dist_new_lmk": 1,
     "min_alpha_new_lmk": 0.5,
     "K": [
       [
