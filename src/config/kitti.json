@@ -29,7 +29,7 @@
   "CO": {
     "corner_patch_size": 15,
     "harris_kappa": 0.04,
-    "num_keypoints": 1000,
+    "num_keypoints": 1500,
     "nonmaximum_supression_radius": 11,
     "max_dist_new_lmk": 100,
     "min_dist_new_lmk": 1,
