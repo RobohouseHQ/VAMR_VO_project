@@ -32,5 +32,7 @@ codegen/
 # Octave session info
 octave-workspace
 
-# Ignore data folder
+# Ignore data and figures folder
 data/**
+figures/**
+
