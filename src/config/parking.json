@@ -1,10 +1,54 @@
 {
-  "TuningParameters": 
-    {
-        "corner_patch_size": 15,
-        "harris_kappa": 0.01,
-        "num_keypoints": 1000,
-	    "nonmaximum_supression_radius": 11
-    }
-    
+  "Init": {
+    "corner_patch_size": 15,
+    "harris_kappa": 0.01,
+    "num_keypoints": 1000,
+    "nonmaximum_supression_radius": 11,
+    "max_distance_new_lmk": 40,
+    "min_distance_new_lmk": 1,
+    "min_alpha_new_lmk": 0.1,
+    "K": [
+      [
+        331.37,
+        0,
+        320
+      ],
+      [
+        0,
+        369.568,
+        240
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ]
+  },
+  "CO": {
+    "corner_patch_size": 15,
+    "harris_kappa": 0.01,
+    "num_keypoints": 1000,
+    "nonmaximum_supression_radius": 11,
+    "max_distance_new_lmk": 40,
+    "min_distance_new_lmk": 1,
+    "min_alpha_new_lmk": 0.5,
+    "K": [
+      [
+        331.37,
+        0,
+        320
+      ],
+      [
+        0,
+        369.568,
+        240
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ]
   }
+}

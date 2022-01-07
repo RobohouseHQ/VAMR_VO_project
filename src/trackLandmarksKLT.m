@@ -1,4 +1,4 @@
-function S_i = trackLandmarksKLT(S, images, T_WC_i, args, beta)
+function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
     % S -> Current state
     % image -> Image we want to use to add landmarks
     % T_WC_i -> pose of camera that took image
@@ -75,14 +75,14 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args, beta)
         v1 = point_3d(1:3) - T_WC_first(:, 4);
         v2 = point_3d(1:3) - T_WC_i(:, 4);
         a = atan2d(norm(cross(v1, v2)), dot(v1, v2)); % Angle in degrees
-            
+
         %TODO: add condition for distance of landmark
-        if a > beta
+        if a > args.min_alpha_new_lmk
             % add candidate keypoint to set of keypoints
-            P = [P C(:,i)];
+            P = [P C(:, i)];
             % add landmark of keypoint to set of tracked landmarks
             X = [X point_3d];
-            
+
             % remove keypoint from candidate keypoints
             C(:, i) = [];
             T(:, i) = [];
@@ -91,7 +91,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args, beta)
         end
 
     end
-    
+
     % Hacky, TODO: select with replacement to avoid duplicates
     for i = 1:100
         r = randi([1 args.num_keypoints]);
