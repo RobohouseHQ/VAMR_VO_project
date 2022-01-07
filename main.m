@@ -74,7 +74,7 @@ end
 keypoints = detectKeypoints(img0, initArgs);
 
 %Initialise KLT
-pointTracker = vision.PointTracker('MaxBidirectionalError', 0.1);
+pointTracker = vision.PointTracker('MaxBidirectionalError', 1);
 initialize(pointTracker, keypoints', img0);
 keypoints_ini = keypoints;
 
