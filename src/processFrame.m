@@ -6,7 +6,7 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
     P_database = S_prev.X;
     keypoints_database = S_prev.P;
 
-    pointTracker = vision.PointTracker('MaxBidirectionalError', args.max_bidir_err);
+    pointTracker = vision.PointTracker('MaxBidirectionalError', 0.5);
     initialize(pointTracker, keypoints_database', img_prev);
     [keypoints_query, point_validity] = pointTracker(img_i);
     matched_keypoints_query = keypoints_query';
