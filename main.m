@@ -1,14 +1,16 @@
 
 
 %% Setup
-clear all;
+clear;
 close all;
 clc;
 ds = 0; % 0: KITTI, 1: Malaga, 2: parking
-parking_path = 'data/parking'
-kitti_path = 'data/kitti05/kitti'
-malaga_path = 'G:/malaga-urban-dataset-extract-07'
+parking_path = 'data/parking';
+kitti_path = 'data/kitti';
+malaga_path = 'data/malaga-urban-dataset-extract-07';
 plot_ground_truth = true;
+
+rng(0)
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
@@ -48,7 +50,7 @@ args = readJson(ds).TuningParameters;
 
 %% Bootstrap
 %set bootstrap_frames
-bootstrap_frames = [1 3]
+bootstrap_frames = [1 3];
 if ds == 0
     img0 = imread([kitti_path '/05/image_0/' ...
         sprintf('%06d.png',bootstrap_frames(1))]);
@@ -75,7 +77,7 @@ end
 args.K = K;
 
 %Feature Detection
-keypoints = detectKeypoints(img0,args)
+keypoints = detectKeypoints(img0,args);
 
 %Initialise KLT 
 pointTracker = vision.PointTracker('MaxBidirectionalError',1);
@@ -120,7 +122,7 @@ p2 = [matched_keypoints_1(2,:); matched_keypoints_1(1,:); ones(1, length(matched
 [E, mask, cameraParams] = determineEssentialMatrix(p1,p2,K);
 
 %Determine final pose (with RANSAC)
-[R_C2_W, T_C2_W, T_W_C2, R_W_C2,p1_mask, p2_mask,P] = extractFinalPose (p1,p2,mask,E,K);
+[R_C2_W, T_C2_W, T_W_C2, R_W_C2, p1_mask, p2_mask,P] = extractFinalPose (p1,p2,mask,E,K);
 
 %Visualise the 3D scene
 visualise3DScene(img0, img1, P, R_C2_W, T_C2_W, p1, p2)
@@ -133,17 +135,18 @@ S_i.X = [];
 S_i.C = [];
 S_i.F = [];
 S_i.T = [];
-S_i.D= [];
+S_i.D = [];
 
-fh = figure(20)
-    fh.WindowState = 'maximized';
-pause(10)
+fh = figure(20);
+%     fh.WindowState = 'maximized';
+% pause(10)
 
-pose_hist = [zeros(3,1)];
-n_tracked_hist = [0];
+% 3xN array of camera positions
+pos_hist = [zeros(3,1)];
+n_tracked_hist = [];
 
 
-for i = 1:size(p2_mask, 2)
+for i = 1:size(p1_mask, 2)
     S_i.C = [S_i.C p1_mask(1:2,i)];
     S_i.F = [S_i.F p1_mask(1:2,i)];
     S_i.T = [S_i.T reshape(eye(3,4), [12,1])];
@@ -167,13 +170,10 @@ images = cell(bootstrap_frames(2)-1,1);
  end
  
 S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], args,0.1);
-plotCO(S_i, images{1}, pose_hist, n_tracked_hist, P,0,ground_truth,plot_ground_truth);
-T_W_C2
-R_W_C2
-size(images, 1)
+plotCO(S_i, images{1}, pos_hist, n_tracked_hist,1,ground_truth,plot_ground_truth);
+
 range = (bootstrap_frames(2)+1):last_frame;
 for i = range
-    iter = i;
     fprintf('\n\nProcessing frame %d\n=====================\n', i);
     if ds == 0
         image = imread([kitti_path '/05/image_0/' sprintf('%06d.png',i)]);
@@ -194,8 +194,6 @@ for i = range
         assert(false);
     end
 
-    % P is a [4xN] matrix containing the triangulated point cloud (in
-    % homogeneous coordinates), given by the function linearTriangulation
     S_prev = S_i;
 
     [S_i, T_WC_i] = processFrame(image, image_prev, S_i, args);
@@ -205,12 +203,12 @@ for i = range
 
     S_i = trackLandmarksKLT(S_i, images, T_WC_i, args,0.5);
 
-    pose_hist = [pose_hist T_WC_i(:,4)];
+    pos_hist = [pos_hist T_WC_i(:,4)];
     n_tracked = length(S_i.X);
     n_tracked_hist = [n_tracked_hist n_tracked];
 
      %S_i = trackLandmarks(S_i, image, T_WC_i, args);
-        plotCO(S_i, image, pose_hist, n_tracked_hist, P,i, ground_truth,plot_ground_truth);
+    plotCO(S_i, image, pos_hist, n_tracked_hist,i+1, ground_truth,plot_ground_truth);
     pause(.01);
     
 end

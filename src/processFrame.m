@@ -4,22 +4,18 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
     % S_prev: previous state
     
     
-    img_query = img_i;
     P_database = S_prev.X;
-    p_database = S_prev.P;
+    keypoints_database = S_prev.P;
     
     K = args.K;
-    
-   
-    keypoints_database = p_database;    
-    
+        
     pointTracker = vision.PointTracker('MaxBidirectionalError',.5);
     initialize(pointTracker,keypoints_database',img_prev);
     [keypoints_query,point_validity] = pointTracker(img_i);
     matched_keypoints_query = keypoints_query';
     matched_keypoints_query = matched_keypoints_query(:, point_validity);
     matched_P_database = P_database(1:3, point_validity);
-    matched_keypoints_database = keypoints_database(:, point_validity);
+%     matched_keypoints_database = keypoints_database(:, point_validity);
 
     %perform RANSAC to find best Pose and inliers
 %     [R_C_W, t_C_W, inlier_mask, max_num_inliers_history, num_iteration_history] = ...
