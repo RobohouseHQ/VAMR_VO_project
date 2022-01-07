@@ -1,4 +1,5 @@
 function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
+    % update pose and pointcloud
     % img_i: image to obtain pose from
     % img_prev: image used to match descriptors with img_i
     % S_prev: previous state
@@ -6,7 +7,7 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
     P_database = S_prev.X;
     keypoints_database = S_prev.P;
 
-    pointTracker = vision.PointTracker('MaxBidirectionalError', 0.5);
+    pointTracker = vision.PointTracker('MaxBidirectionalError', args.max_bidir_err);
     initialize(pointTracker, keypoints_database', img_prev);
     [keypoints_query, point_validity] = pointTracker(img_i);
     matched_keypoints_query = keypoints_query';
