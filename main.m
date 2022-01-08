@@ -13,13 +13,13 @@ malaga_path = 'data/malaga-urban-dataset-extract-07';
 custom_ds_path = 'data/undistorted_front_walk';
 plot_ground_truth = false;
 
-% rng(0)
+rng(0)
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
     assert(exist('kitti_path', 'var') ~= 0);
     ground_truth = load([kitti_path '/poses/05.txt']);
-    ground_truth = ground_truth(:, [end - 8 end]);
+    ground_truth = ground_truth(:, [4 8 12])';
     last_frame = 4540;
 
 elseif ds == 1
@@ -29,6 +29,8 @@ elseif ds == 1
             '/malaga-urban-dataset-extract-07_rectified_800x600_Images']);
     left_images = images(3:2:end);
     last_frame = length(left_images);
+    plot_ground_truth = false;
+    ground_truth = []; % gives GPS data
 
 elseif ds == 2
     % Path containing images, depths and all...
@@ -37,10 +39,10 @@ elseif ds == 2
     % K = load([parking_path '/K.txt']);
 
     ground_truth = load([parking_path '/poses.txt']);
-    ground_truth = ground_truth(:, [end - 8 end]);
+    ground_truth = ground_truth(:, [4 8 12])';
 elseif ds == 3
     assert(exist('custom_ds_path', 'var') ~= 0);
-    last_frame = 3732; 
+    last_frame = 729; 
     ground_truth =[];
 else
     assert(false);
@@ -83,7 +85,7 @@ end
 keypoints = detectKeypoints(img0, initArgs);
 
 %Initialise KLT
-pointTracker = vision.PointTracker('MaxBidirectionalError', 1);
+pointTracker = vision.PointTracker('MaxBidirectionalError', initArgs.max_bidir_err);
 initialize(pointTracker, keypoints', img0);
 keypoints_ini = keypoints;
 
@@ -97,7 +99,7 @@ for i = 1:bootstrap_frames(2)
                                 '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
                                 left_images(i).name]));
     elseif ds == 2
-        img = rgb2gray(imread([parkin_path ...
+        img = rgb2gray(imread([parking_path ...
                                 sprintf('/images/img_%05d.png', i)]));
     elseif ds == 3
         img = imread([custom_ds_path '/images/' ...
@@ -129,10 +131,10 @@ p2 = [matched_keypoints_1(2, :); matched_keypoints_1(1, :); ones(1, length(match
 [E, mask, cameraParams] = determineEssentialMatrix(p1, p2, initArgs.K);
 
 %Determine final pose (with RANSAC)
-[R_C2_W, T_C2_W, T_W_C2, R_W_C2, p1_mask, p2_mask, P] = extractFinalPose (p1, p2, mask, E, initArgs.K);
+[R_C2_W, t_C2_W, t_W_C2, R_W_C2, p1_mask, p2_mask, P] = extractFinalPose (p1, p2, mask, E, initArgs.K);
 
 %Visualise the 3D scene
-visualise3DScene(img0, img1, P, R_C2_W, T_C2_W, p1, p2)
+% visualise3DScene(img0, img1, P, R_C2_W, t_C2_W, p1, p2)
 
 %% Continuous operation
 img_prev = img1;
@@ -146,8 +148,27 @@ S_i.D = [];
 fh = figure(20);
 
 % 3xN array of camera positions
-pos_hist = [zeros(3, 1)];
+pos_hist = [t_W_C2];
 n_tracked_hist = [];
+
+% Hidden state for BA
+hidden_state.twists = HomogMatrix2twist([[R_W_C2 t_C2_W]; zeros(1, 3) 1]);
+hidden_state.landmarks = P;
+
+% Observation struct for BA
+observations.n = size(hidden_state.twists, 2); % number of frames/poses
+observations.m = size(hidden_state.landmarks, 2); % number of landmarks
+assert(size(p2_mask, 2) == size(P, 2), "number of keypoints in frame 2 and num of triangulated landmarks does not match");
+% k is the number of landmarks observed in the frame, ...
+% p are the keypoints in the image frame that correspond to ...
+% the landmarks in index positions l in the hidden_state.landmarks array
+observations.O = [struct('k', size(p2_mask, 2), 'p', p2_mask, 'l', 1:observations.m)]; % struct array
+
+hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
+
+% Plot BA
+hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
+plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
 
 for i = 1:size(p1_mask, 2)
     S_i.C = [S_i.C p1_mask(1:2, i)];
@@ -176,7 +197,7 @@ for i = 1:bootstrap_frames(2)
 
 end
 
-S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], initArgs);
+S_i = trackLandmarksKLT(S_i, images, [R_W_C2 t_W_C2], initArgs);
 plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_truth);
 
 %Load tuning parameters for CO
@@ -226,3 +247,18 @@ for i = (bootstrap_frames(2)+1):1: last_frame
     pause(.01);
 
 end
+
+pp_G_C = ground_truth(:, 1:length(pos_hist));
+
+p_G_C = alignEstimateToGroundTruth(pp_G_C, pos_hist);
+
+figure(2);
+plot(pp_G_C(3, :), -pp_G_C(1, :));
+hold on;
+plot(pos_hist(3, :), -pos_hist(1, :));
+plot(p_G_C(3, :), -p_G_C(1, :));
+hold off;
+axis equal;
+% axis([-5 95 -30 10]);
+legend('Ground truth', 'Original estimate', 'Aligned estimate', ...
+'Location', 'SouthWest');
