@@ -1,4 +1,4 @@
-function processFrame(S_i, image, pose_hist, n_tracked_hist, P);
+function plotCO(S_i, image, pose_hist, n_tracked_hist, ground_truth,plot_truth)
 
     % Plot
     height = 2; width = 4;
@@ -35,7 +35,13 @@ function processFrame(S_i, image, pose_hist, n_tracked_hist, P);
 
     % Number of triangulated landmarks
     subplot(height,width,7)
-    plot(pose_hist(1, :), pose_hist(3, :));
+    axis equal;
+    plot(pose_hist(1, :), pose_hist(3, :)),'b';
+    hold on
+    if plot_truth
+        plot(ground_truth(1:length(pose_hist), 1), ground_truth(1:length(pose_hist), 2),'r');
+    end
+    hold off
     daspect([1 1 1])
     pbaspect([1 1 1])
     title('Full trajectory') 

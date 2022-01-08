@@ -4,9 +4,12 @@
 clear all;
 close all;
 clc;
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
-parking_path = 'data/parking'
-kitti_path = 'data/kitti'
+ds = 2; % 0: KITTI, 1: Malaga, 2: parking
+parking_path = 'data/parking';
+kitti_path = 'data/kitti';
+plot_ground_truth = true;
+
+% rng(0)
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
@@ -28,6 +31,8 @@ elseif ds == 1
     K = [621.18428 0 404.0076
         0 621.18428 309.05989
         0 0 1];
+    ground_truth = [];
+    plot_ground_truth = false;
 elseif ds == 2
     
     % Path containing images, depths and all...
@@ -171,10 +176,6 @@ matched_keypoints_0_mask = matched_keypoints_0(:, mask);
  T_W_C2 = T_W_C2';
  R_W_C2 = R_W_C2';
  
- sum(inlier_mask)/length(inlier_mask)
-T_C2_W
-T_W_C2
-P;
 
 %% Visualize the 3-D scene
 figure(1),
@@ -222,8 +223,6 @@ S_i.T = [];
 S_i.D= [];
 
 fh = figure(20)
-    fh.WindowState = 'maximized';
-pause(10)
 
 pose_hist = [zeros(3,1)];
 n_tracked_hist = [0];
@@ -251,9 +250,8 @@ images = cell(bootstrap_frames(2)-1,1);
  
  end
 S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], args,0.1);
-plotCO(S_i, images{1}, pose_hist, n_tracked_hist, P);
-T_W_C2
-R_W_C2
+plotCO(S_i, images{1}, pose_hist, n_tracked_hist,ground_truth, plot_ground_truth);
+
 size(images, 1)
 range = (bootstrap_frames(2)+1):last_frame;
 for i = range
@@ -291,11 +289,8 @@ for i = range
     n_tracked_hist = [n_tracked_hist n_tracked];
 
 
-    
-
-
      %S_i = trackLandmarks(S_i, image, T_WC_i, args);
-        plotCO(S_i, image, pose_hist, n_tracked_hist, P);
+    plotCO(S_i, image, pose_hist, n_tracked_hist, ground_truth, plot_ground_truth);
     pause(.01);
     
 
