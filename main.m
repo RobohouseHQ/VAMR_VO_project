@@ -27,6 +27,8 @@ elseif ds == 1
             '/malaga-urban-dataset-extract-07_rectified_800x600_Images']);
     left_images = images(3:2:end);
     last_frame = length(left_images);
+    plot_ground_truth = false;
+    ground_truth = []; % gives GPS data
 
 elseif ds == 2
 
@@ -88,7 +90,7 @@ for i = 1:bootstrap_frames(2)
                                 '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
                                 left_images(i).name]));
     elseif ds == 2
-        img = rgb2gray(imread([parkin_path ...
+        img = rgb2gray(imread([parking_path ...
                                 sprintf('/images/img_%05d.png', i)]));
     else
         assert(false);
@@ -168,7 +170,7 @@ plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_tr
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
-last_frame = 500; % Testing
+% last_frame = 1300; % Testing
 
 range = (bootstrap_frames(2) + 1):last_frame;
 
@@ -225,4 +227,4 @@ hold off;
 axis equal;
 % axis([-5 95 -30 10]);
 legend('Ground truth', 'Original estimate', 'Aligned estimate', ...
-    'Location', 'SouthWest');
+'Location', 'SouthWest');
