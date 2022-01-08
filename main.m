@@ -5,7 +5,7 @@ clc;
 path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ds = 2; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
 malaga_path = 'data/malaga-urban-dataset-extract-07';
@@ -122,7 +122,7 @@ p2 = [matched_keypoints_1(2, :); matched_keypoints_1(1, :); ones(1, length(match
 [R_C2_W, t_C2_W, t_W_C2, R_W_C2, p1_mask, p2_mask, P] = extractFinalPose (p1, p2, mask, E, initArgs.K);
 
 %Visualise the 3D scene
-visualise3DScene(img0, img1, P, R_C2_W, t_C2_W, p1, p2)
+% visualise3DScene(img0, img1, P, R_C2_W, t_C2_W, p1, p2)
 
 %% Continuous operation
 img_prev = img1;

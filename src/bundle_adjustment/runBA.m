@@ -40,8 +40,8 @@ function hidden_state = runBA(hidden_state, observations, K)
             error_i = error_i + 2 * num_keypoints_in_frame;
         end
 
-        figure(4);
-        spy(pattern);
+        % figure(4);
+        % spy(pattern);
     end
 
     % Also here, using an external error function for clean code.

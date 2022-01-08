@@ -1,7 +1,7 @@
 {
   "Init": {
     "corner_patch_size": 15,
-    "harris_kappa": 0.01,
+    "harris_kappa": 0.1,
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
     "max_dist_new_lmk": 40,
@@ -28,7 +28,7 @@
   },
   "CO": {
     "corner_patch_size": 15,
-    "harris_kappa": 0.01,
+    "harris_kappa": 0.1,
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
     "max_dist_new_lmk": 40,
