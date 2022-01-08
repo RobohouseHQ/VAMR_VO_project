@@ -53,7 +53,7 @@ initArgs = readJson(ds).Init;
 
 %% Bootstrap
 %set bootstrap_frames
-bootstrap_frames = [1 3];
+bootstrap_frames = [10 13];
 
 if ds == 0
     img0 = imread([kitti_path '/05/image_0/' ...
