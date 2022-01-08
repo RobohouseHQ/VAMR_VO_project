@@ -29,8 +29,8 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
 
     
 
-    disp('Estimated inlier ratio is');
-    disp(nnz(inlier_mask)/numel(inlier_mask));
+    %disp('Estimated inlier ratio is');
+    %disp(nnz(inlier_mask)/numel(inlier_mask));
     
     % TODO: compare keeping outliers vs removing them from P and X
     S_i.P = matched_keypoints_query(1:2,inlier_mask);

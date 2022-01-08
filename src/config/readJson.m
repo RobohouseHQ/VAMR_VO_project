@@ -6,6 +6,8 @@ function args = readJson(ds)
         fileName = 'malaga.json'
     elseif ds == 2
         fileName = 'parking.json'
+    elseif ds ==3
+        fileName = 'custom.json'
     else
         assert(false, 'invalid dataset number')
     end

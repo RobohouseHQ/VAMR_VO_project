@@ -100,7 +100,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         C = [C keypoints_img(:, r)];
     end
 
-    disp('Tracked  = ');
+    %disp('Tracked  = ');
 
     S_i.C = C;
     S_i.F = F;
