@@ -5,7 +5,7 @@ function error_terms = baError(hidden_state, observations, K)
 
     plot_debug = false;
 
-    num_frames = observations(1);
+    num_frames = observations.n;
     T_W_C = reshape(hidden_state(1:num_frames * 6), 6, []);
     p_W_landmarks = reshape(hidden_state(num_frames * 6 + 1:end), 3, []);
 
@@ -16,14 +16,11 @@ function error_terms = baError(hidden_state, observations, K)
 
     for i = 1:num_frames
         single_T_W_C = twist2HomogMatrix(T_W_C(:, i));
-        num_frame_observations = observations(observation_i + 1);
+        num_frame_observations = observations.O(i).k;
 
-        keypoints = flipud(reshape(observations(observation_i + 2: ...
-            observation_i + 1 + num_frame_observations * 2), 2, []));
+        keypoints = observations.O(i).p;
 
-        landmark_indices = observations( ...
-            observation_i + 2 + num_frame_observations * 2: ...
-            observation_i + 1 + num_frame_observations * 3);
+        landmark_indices = observations.O(i).l;
 
         % Landmarks observed in this specific frame.
         p_W_L = p_W_landmarks(:, landmark_indices);
@@ -31,7 +28,7 @@ function error_terms = baError(hidden_state, observations, K)
         % Transforming the observed landmarks into the camera frame for
         % projection.
         num_landmarks = size(p_W_L, 2);
-        T_C_W = single_T_W_C^-1;
+        T_C_W = single_T_W_C^ - 1;
         p_C_L = T_C_W(1:3, 1:3) * p_W_L + ...
             repmat(T_C_W(1:3, end), [1 num_landmarks]);
 

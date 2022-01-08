@@ -119,10 +119,10 @@ p2 = [matched_keypoints_1(2, :); matched_keypoints_1(1, :); ones(1, length(match
 [E, mask, cameraParams] = determineEssentialMatrix(p1, p2, initArgs.K);
 
 %Determine final pose (with RANSAC)
-[R_C2_W, T_C2_W, T_W_C2, R_W_C2, p1_mask, p2_mask, P] = extractFinalPose (p1, p2, mask, E, initArgs.K);
+[R_C2_W, t_C2_W, t_W_C2, R_W_C2, p1_mask, p2_mask, P] = extractFinalPose (p1, p2, mask, E, initArgs.K);
 
 %Visualise the 3D scene
-visualise3DScene(img0, img1, P, R_C2_W, T_C2_W, p1, p2)
+visualise3DScene(img0, img1, P, R_C2_W, t_C2_W, p1, p2)
 
 %% Continuous operation
 img_prev = img1;
@@ -136,8 +136,27 @@ S_i.D = [];
 fh = figure(20);
 
 % 3xN array of camera positions
-pos_hist = [zeros(3, 1)];
+pos_hist = [t_W_C2];
 n_tracked_hist = [];
+
+% Hidden state for BA
+hidden_state.twists = HomogMatrix2twist([[R_W_C2 t_C2_W]; zeros(1, 3) 1]);
+hidden_state.landmarks = P;
+
+% Observation struct for BA
+observations.n = size(hidden_state.twists, 2); % number of frames/poses
+observations.m = size(hidden_state.landmarks, 2); % number of landmarks
+assert(size(p2_mask, 2) == size(P, 2), "number of keypoints in frame 2 and num of triangulated landmarks does not match");
+% k is the number of landmarks observed in the frame, ...
+% p are the keypoints in the image frame that correspond to ...
+% the landmarks in index positions l in the hidden_state.landmarks array
+observations.O = [struct('k', size(p2_mask, 2), 'p', p2_mask, 'l', 1:observations.m)]; % struct array
+
+hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
+
+% Plot BA
+hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
+plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
 
 for i = 1:size(p1_mask, 2)
     S_i.C = [S_i.C p1_mask(1:2, i)];
@@ -164,7 +183,7 @@ for i = 1:bootstrap_frames(2)
 
 end
 
-S_i = trackLandmarksKLT(S_i, images, [R_W_C2 T_W_C2], initArgs);
+S_i = trackLandmarksKLT(S_i, images, [R_W_C2 t_W_C2], initArgs);
 plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_truth);
 
 %Load tuning parameters for CO
