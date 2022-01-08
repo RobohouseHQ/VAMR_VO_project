@@ -5,6 +5,7 @@ clc;
 path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
+%% User settings
 ds = 2; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
@@ -13,6 +14,7 @@ plot_ground_truth = true;
 
 rng(0)
 
+%% Dataset loading
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
     assert(exist('kitti_path', 'var') ~= 0);
@@ -189,7 +191,7 @@ plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_tr
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
-% last_frame = 1300; % Testing
+last_frame = 20; % Testing
 
 range = (bootstrap_frames(2) + 1):last_frame;
 
