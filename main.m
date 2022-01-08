@@ -17,7 +17,7 @@ if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
     assert(exist('kitti_path', 'var') ~= 0);
     ground_truth = load([kitti_path '/poses/05.txt']);
-    ground_truth = ground_truth(:, [end - 8 end]);
+    ground_truth = ground_truth(:, [4 8 12])';
     last_frame = 4540;
 
 elseif ds == 1
@@ -36,7 +36,7 @@ elseif ds == 2
     % K = load([parking_path '/K.txt']);
 
     ground_truth = load([parking_path '/poses.txt']);
-    ground_truth = ground_truth(:, [end - 8 end]);
+    ground_truth = ground_truth(:, [4 8 12])';
 else
     assert(false);
 end
@@ -168,6 +168,8 @@ plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_tr
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
+last_frame = 500; % Testing
+
 range = (bootstrap_frames(2) + 1):last_frame;
 
 for i = range
@@ -209,3 +211,18 @@ for i = range
     pause(.01);
 
 end
+
+pp_G_C = ground_truth(:, 1:length(pos_hist));
+
+p_G_C = alignEstimateToGroundTruth(pp_G_C, pos_hist);
+
+figure(2);
+plot(pp_G_C(3, :), -pp_G_C(1, :));
+hold on;
+plot(pos_hist(3, :), -pos_hist(1, :));
+plot(p_G_C(3, :), -p_G_C(1, :));
+hold off;
+axis equal;
+% axis([-5 95 -30 10]);
+legend('Ground truth', 'Original estimate', 'Aligned estimate', ...
+    'Location', 'SouthWest');
