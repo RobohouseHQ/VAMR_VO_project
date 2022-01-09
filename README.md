@@ -36,6 +36,7 @@ The screencasts that showcase some sample results [below](#results) have been re
 * Cores: 12
 * CPU frequency: 2.6 GHz
 * RAM: 16 GB
+* No parallelization, single thread performance
 
 ### Instructions
 1. Clone this repository somewhere on your machine.
