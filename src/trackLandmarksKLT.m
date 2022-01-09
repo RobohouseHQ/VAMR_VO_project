@@ -69,7 +69,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         isFarEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) > args.min_dist_new_lmk;
         isDuplicate = ~isempty(P) && sum(abs(P(1, :) - C(1, i)) < 1 & abs(P(2, :) - C(2, i)) < 1) > 0;
         % Add new landmark if it's valid
-        if alpha > args.min_alpha_new_lmk && ~isDuplicate && isCloseEnough && isFarEnough %&& isInFront_curr && isInFront_first 
+        if alpha > args.min_alpha_new_lmk %&& ~isDuplicate %&& isCloseEnough && isFarEnough && isInFront_curr && isInFront_first 
             % add candidate keypoint to set of keypoints
             P = [P C(:, i)];
             % add landmark of keypoint to set of tracked landmarks
@@ -86,18 +86,26 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
 
     end
 
-    % Hacky, TODO: select with replacement to avoid duplicates, also remove hardcoded 100. Should 
+    for i = 1:100
+        r = randi([1 args.num_keypoints]);
+        F = [F keypoints_img(:, r)];
+        T = [T reshape(T_WC_i, [12, 1])];
+        C = [C keypoints_img(:, r)];
+    end
+    
+    % This approach makes more sense but it doesn't work as well or isn't
+    % suitable for the set of tuned params
     % Ideally the number of added candidate keypoints is a function of
     % size(P,2) so that we don't run out of them
-    for i = 1:args.num_keypoints
-        % check that keypoints_img being added to C are not already in C
-        isDuplicate = ~isempty(P) && sum(abs(C(1, :) - keypoints_img(1, i)) < 1 & abs(C(2, :) - keypoints_img(2, i)) < 1) > 0;
-        if ~isDuplicate
-            F = [F keypoints_img(:, i)];
-            T = [T reshape(T_WC_i, [12, 1])];
-            C = [C keypoints_img(:, i)];
-        end
-    end
+%     for i = 1:args.num_keypoints
+%         % check that keypoints_img being added to C are not already in C
+%         isDuplicate = ~isempty(P) && sum(abs(C(1, :) - keypoints_img(1, i)) < 1 & abs(C(2, :) - keypoints_img(2, i)) < 1) > 0;
+%         if ~isDuplicate
+%             F = [F keypoints_img(:, i)];
+%             T = [T reshape(T_WC_i, [12, 1])];
+%             C = [C keypoints_img(:, i)];
+%         end
+%     end
 
     S_i.C = C;
     S_i.F = F;
