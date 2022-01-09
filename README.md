@@ -50,6 +50,9 @@ malaga_path = 'data/malaga-urban-dataset-extract-07';
 ### Custom (self-recorded) dataset
 
 
+Our attempt at generating a validation (ground-truth) dataset using ROVIO can be found in [this fork](https://github.com/RobohouseHQ/rovio). Due to time constraints, we have not been able to improve on the out-of-the-box performance of ROVIO, which unfortunately had significant drift and could therefore not be used as ground truth. An example of ROVIO running on one of our custom Student Project House datasets can be found in the video below.
+
+[![ROVIO on custom DS](img/ROVIO_on_custom_ds.jpeg)](https://youtu.be/_WUWks9dkYk)
 
 <a name="contributors"><a/>
 ## Contributors

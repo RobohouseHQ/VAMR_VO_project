@@ -31,8 +31,8 @@
     "harris_kappa": 0.1,
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
-    "max_dist_new_lmk": 40,
-    "min_dist_new_lmk": 1,
+    "max_dist_new_lmk": 60,
+    "min_dist_new_lmk": 3,
     "min_alpha_new_lmk": 0.5,
     "max_bidir_err": 0.5,
     "K": [
