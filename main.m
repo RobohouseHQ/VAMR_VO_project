@@ -191,7 +191,7 @@ plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_tr
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
-last_frame = 20; % Testing
+% last_frame = 20; % Testing
 
 range = (bootstrap_frames(2) + 1):last_frame;
 
