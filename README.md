@@ -15,17 +15,28 @@ This repository contains a MATLAB implementation of a Monocular (single camera) 
 <a name="runpipeline"></a>
 ## Running the pipeline
 ### Requirements
-The code has been developed and tested using MATLAB version 2020b and 2021b. In addition, the following toolboxes are needed:
+The code has been developed and tested using MATLAB version 2020b and 2021b. 
+
+In our pipeline, we have made use of the following built-in MATLAB functions/classes:
+* triangulate (triangulation of landmarks)
+* vision.PointTracker (KLT)
+* lsqnonlin (trajectory alignment and BA)
+* estimateWorldCameraPose (P3P + MSAC)
+* estimateEssentialMatrix 
+
+The following toolboxes are needed to use these functions:
 * image_toolbox
 * optimization_toolbox
 * statistics_toolbox
 * video_and_image_blockset
+
 
 The screencasts that showcase some sample results [below](#results) have been recorded on a laptop with the following specs:
 * Ubuntu 20.04
 * Cores: 12
 * CPU frequency: 2.6 GHz
 * RAM: 16 GB
+* No parallelization, single thread performance
 
 ### Instructions
 1. Clone this repository somewhere on your machine.
