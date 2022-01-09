@@ -32,7 +32,7 @@
     "num_keypoints": 1000,
     "nonmaximum_supression_radius": 11,
     "max_dist_new_lmk": 100,
-    "min_dist_new_lmk": 1,
+    "min_dist_new_lmk": 20,
     "min_alpha_new_lmk": 0.5,
     "max_bidir_err": 0.5,
     "K": [

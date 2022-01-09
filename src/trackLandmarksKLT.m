@@ -12,6 +12,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
     C = [];
     T = [];
 
+    % If candidate keypoints array not empty, track keypoints and update their location in the last image frame, and if lost, delete its tracks from T and F
     if size(S.C, 2) ~= 0
 
         keypoints_ini = S.C;
@@ -24,18 +25,9 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
 
         end
 
-        %         [keypoints_end,point_validity] = pointTracker(image);
-        %         keypoints_ini = keypoints_ini(:, point_validity);
         keypoints_end = keypoints_end';
-        keypoints_end = keypoints_end(:, point_validity);
 
-        %         figure(4)
-        %         imshow(images{size(images,1)});
-        %         hold on;
-        %         plotMatches(1:size(keypoints_end),2), keypoints_end), S.F(:, point_validity)));
-        %         hold off;
-        %         pause(0.01);
-        C = keypoints_end;
+        C = keypoints_end(:, point_validity);
         F = S.F(:, point_validity);
         T = S.T(:, point_validity);
 
@@ -45,11 +37,11 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
     P = S.P;
     X = S.X;
 
-    % For each keypoint in the track, triangulate landmark and check alpha.
-    % If alpha is "good" then add to real pool of keypoints and landmarks
+    % For each keypoint in the track, triangulate landmark and check its quality.
+    % If landmark is valid or "good" then add to real pool of keypoints and landmarks
     % (P and X) and discard from candidate pool
     n_candidates = size(C, 2);
-
+    % Candidate keypoint filtering: should check that these candidate keypoints are not already in P before adding them
     for i = n_candidates:-1:1
 
         T_WC_first = reshape(T(:, i), [3, 4]);
@@ -63,11 +55,6 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         T_CW_i = [R_CW_i t_CW_i];
         M_i = args.K * T_CW_i;
 
-        %         point_2d_first = [F(:,i); 1];
-        %         point_2d_current = [C(:,i); 1];
-        %         point_3d = linearTriangulation(point_2d_first,point_2d_current,M_first,M_i);
-        %         point_3d = point_3d(1:3);
-
         % Use matlab function, passing in point_2d_first, point_2d_current
         % and the respective projection matrices
         point_3d = triangulate(F(:, i)', C(:, i)',M_first', M_i')';
@@ -80,13 +67,15 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         isInFront_curr = R_CW_i(3, :) * point_3d > -t_CW_i(3);
         isCloseEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) < args.max_dist_new_lmk;
         isFarEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) > args.min_dist_new_lmk;
-
+        isDuplicate = ~isempty(P) && sum(abs(P(1, :) - C(1, i)) < 1 & abs(P(2, :) - C(2, i)) < 1) > 0;
         % Add new landmark if it's valid
-        if alpha > args.min_alpha_new_lmk %&& isInFront_curr && isInFront_first % && isCloseEnough && isFarEnough
+        if alpha > args.min_alpha_new_lmk %&& ~isDuplicate %&& isCloseEnough && isFarEnough && isInFront_curr && isInFront_first 
             % add candidate keypoint to set of keypoints
             P = [P C(:, i)];
             % add landmark of keypoint to set of tracked landmarks
             X = [X point_3d];
+
+            % This is the place where new landmarks and corresponding keypoints get added, so landmark labelling should be done here in the observation and hidden_state objects
 
             % remove keypoint from candidate keypoints
             C(:, i) = [];
@@ -97,7 +86,6 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
 
     end
 
-    % Hacky, TODO: select with replacement to avoid duplicates
     for i = 1:100
         r = randi([1 args.num_keypoints]);
         F = [F keypoints_img(:, r)];
@@ -105,7 +93,20 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         C = [C keypoints_img(:, r)];
     end
 
-    %disp('Tracked  = ');
+    
+    % This approach makes more sense but it doesn't work as well or isn't
+    % suitable for the set of tuned params
+    % Ideally the number of added candidate keypoints is a function of
+    % size(P,2) so that we don't run out of them
+%     for i = 1:args.num_keypoints
+%         % check that keypoints_img being added to C are not already in C
+%         isDuplicate = ~isempty(P) && sum(abs(C(1, :) - keypoints_img(1, i)) < 1 & abs(C(2, :) - keypoints_img(2, i)) < 1) > 0;
+%         if ~isDuplicate
+%             F = [F keypoints_img(:, i)];
+%             T = [T reshape(T_WC_i, [12, 1])];
+%             C = [C keypoints_img(:, i)];
+%         end
+%     end
 
     S_i.C = C;
     S_i.F = F;

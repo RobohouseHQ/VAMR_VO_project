@@ -15,9 +15,7 @@ function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
     matched_P_database = P_database(1:3, point_validity);
     %     matched_keypoints_database = keypoints_database(:, point_validity);
 
-    %perform RANSAC to find best Pose and inliers
-    %     [R_C_W, t_C_W, inlier_mask, max_num_inliers_history, num_iteration_history] = ...
-    %         ransacLocalization(flipud(matched_keypoints_query), matched_P_database, K);
+    %perform p3p + MSAC
     cameraParams = cameraParameters('IntrinsicMatrix', args.K');
     [R_WC, t_WC, inlier_mask] = estimateWorldCameraPose(matched_keypoints_query', matched_P_database', cameraParams);
     t_WC = t_WC';
