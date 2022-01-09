@@ -157,8 +157,8 @@ observations.O = [struct('k', size(p2_mask, 2), 'p', p2_mask, 'l', 1:observation
 hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
 
 % Plot BA
-hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
-plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
+% hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
+% plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
 
 for i = 1:size(p1_mask, 2)
     S_i.C = [S_i.C p1_mask(1:2, i)];
