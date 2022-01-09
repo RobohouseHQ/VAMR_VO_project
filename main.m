@@ -6,7 +6,7 @@ path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
 %% User settings
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ds = 2; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
 malaga_path = 'data/malaga-urban-dataset-extract-07';
