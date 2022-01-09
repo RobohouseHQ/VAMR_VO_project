@@ -1,4 +1,4 @@
-function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
+function [hidden_state, observations, S_i] = trackLandmarksKLT(S, images, T_WC_i, hidden_state, observations, args)
     % S -> Current state
     % image -> Image we want to use to add landmarks
     % T_WC_i -> pose of camera that took image
@@ -67,15 +67,27 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         isInFront_curr = R_CW_i(3, :) * point_3d > -t_CW_i(3);
         isCloseEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) < args.max_dist_new_lmk;
         isFarEnough = vecnorm(R_CW_i(3, :) * point_3d, 2) > args.min_dist_new_lmk;
-        isDuplicate = ~isempty(P) && sum(abs(P(1, :) - C(1, i)) < 1 & abs(P(2, :) - C(2, i)) < 1) > 0;
         % Add new landmark if it's valid
-        if alpha > args.min_alpha_new_lmk %&& ~isDuplicate %&& isCloseEnough && isFarEnough && isInFront_curr && isInFront_first 
+        if alpha > args.min_alpha_new_lmk %&& isCloseEnough && isFarEnough && isInFront_curr && isInFront_first
+            % This is the place where new landmarks get added, so landmark labelling should be done here in the observation and hidden_state objects
+
+            % % Find the existing landmark corresponding to this observed keypoint,
+            % % if it doesn't match existing landmarks, then add a landmark and its
+            % % index is observations.m + num_new_landmarks, which is unique?
+
+            hidden_state.landmarks = [hidden_state.landmarks point_3d];
+            observations.m = observations.m + 1;
+            % observations.O(end).l = [observations.O(end).l observations.m];
+            % % Only increase the number of new landmarks if this valid landmark is unique
+            % num_new_landmarks = num_new_landmarks + 1;
+
+            % % Enhance this check by comparing the 3D landmark
+            % isDuplicate = ~isempty(P) && sum(abs(P(1, :) - C(1, i)) < 1 & abs(P(2, :) - C(2, i)) < 1) > 0;
+
             % add candidate keypoint to set of keypoints
             P = [P C(:, i)];
             % add landmark of keypoint to set of tracked landmarks
             X = [X point_3d];
-
-            % This is the place where new landmarks and corresponding keypoints get added, so landmark labelling should be done here in the observation and hidden_state objects
 
             % remove keypoint from candidate keypoints
             C(:, i) = [];
@@ -92,20 +104,20 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         T = [T reshape(T_WC_i, [12, 1])];
         C = [C keypoints_img(:, r)];
     end
-    
+
     % This approach makes more sense but it doesn't work as well or isn't
     % suitable for the set of tuned params
     % Ideally the number of added candidate keypoints is a function of
     % size(P,2) so that we don't run out of them
-%     for i = 1:args.num_keypoints
-%         % check that keypoints_img being added to C are not already in C
-%         isDuplicate = ~isempty(P) && sum(abs(C(1, :) - keypoints_img(1, i)) < 1 & abs(C(2, :) - keypoints_img(2, i)) < 1) > 0;
-%         if ~isDuplicate
-%             F = [F keypoints_img(:, i)];
-%             T = [T reshape(T_WC_i, [12, 1])];
-%             C = [C keypoints_img(:, i)];
-%         end
-%     end
+    %     for i = 1:args.num_keypoints
+    %         % check that keypoints_img being added to C are not already in C
+    %         isDuplicate = ~isempty(P) && sum(abs(C(1, :) - keypoints_img(1, i)) < 1 & abs(C(2, :) - keypoints_img(2, i)) < 1) > 0;
+    %         if ~isDuplicate
+    %             F = [F keypoints_img(:, i)];
+    %             T = [T reshape(T_WC_i, [12, 1])];
+    %             C = [C keypoints_img(:, i)];
+    %         end
+    %     end
 
     S_i.C = C;
     S_i.F = F;

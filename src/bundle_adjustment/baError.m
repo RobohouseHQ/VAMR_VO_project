@@ -19,7 +19,12 @@ function error_terms = baError(hidden_state, observations, K)
         num_frame_observations = observations.O(i).k;
 
         keypoints = observations.O(i).p;
-
+        
+        
+        if size(keypoints, 1) == 2
+            keypoints = [keypoints; ones(1, size(keypoints, 2))];
+        end
+        
         landmark_indices = observations.O(i).l;
 
         % Landmarks observed in this specific frame.

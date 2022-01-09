@@ -6,7 +6,10 @@ function hidden_state = runBA(hidden_state, observations, K)
 
     if with_pattern
         num_frames = observations.n;
-        num_observations = length(observations.O);
+        num_observations = 0;
+        for i = 1:length(observations.O)
+            num_observations = num_observations + observations.O(i).k;
+        end
         % Factor 2, one error for each x and y direction.
         num_error_terms = 2 * num_observations;
         % Each error term will depend on one pose (6 entries) and one landmark
@@ -15,7 +18,7 @@ function hidden_state = runBA(hidden_state, observations, K)
         num_error_terms * 9);
 
         % Fill pattern for each frame individually:
-        observation_i = 3; % iterator into serialized observations
+%         observation_i = 3; % iterator into serialized observations
         error_i = 1; % iterating frames, need another iterator for the error
 
         for frame_i = 1:num_frames

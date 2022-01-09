@@ -6,7 +6,7 @@ path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
 %% User settings
-ds = 2; % 0: KITTI, 1: Malaga, 2: parking
+ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
 malaga_path = 'data/malaga-urban-dataset-extract-07';
@@ -141,30 +141,39 @@ fh = figure(20);
 pos_hist = [t_W_C2];
 n_tracked_hist = [];
 
-% Hidden state for BA
-hidden_state.twists = HomogMatrix2twist([[R_W_C2 t_C2_W]; zeros(1, 3) 1]);
-hidden_state.landmarks = P;
+%% BA on bootstrapped landmarks and pose (test)
+% % Hidden state for BA
+% hidden_state.twists = HomogMatrix2twist([[R_W_C2 t_C2_W]; zeros(1, 3) 1]);
+% hidden_state.landmarks = P;
+% 
+% % Observation struct for BA
+% observations.n = size(hidden_state.twists, 2); % number of frames/poses
+% observations.m = size(hidden_state.landmarks, 2); % number of landmarks
+% assert(size(p2_mask, 2) == size(P, 2), "number of keypoints in frame 2 and num of triangulated landmarks does not match");
+% % k is the number of landmarks observed in the frame, ...
+% % p are the keypoints in the image frame that correspond to ...
+% % the landmarks in index positions l in the hidden_state.landmarks array
+% observations.O = [struct('k', size(p2_mask, 2), 'p', p2_mask, 'l', 1:observations.m)]; % struct array
 
-% Observation struct for BA
-observations.n = size(hidden_state.twists, 2); % number of frames/poses
-observations.m = size(hidden_state.landmarks, 2); % number of landmarks
-assert(size(p2_mask, 2) == size(P, 2), "number of keypoints in frame 2 and num of triangulated landmarks does not match");
-% k is the number of landmarks observed in the frame, ...
-% p are the keypoints in the image frame that correspond to ...
-% the landmarks in index positions l in the hidden_state.landmarks array
-observations.O = [struct('k', size(p2_mask, 2), 'p', p2_mask, 'l', 1:observations.m)]; % struct array
-
-hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
-
-% Plot BA
+% % Run and plot BA
+% hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
 % hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
 % plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
 
-for i = 1:size(p1_mask, 2)
-    S_i.C = [S_i.C p1_mask(1:2, i)];
-    S_i.F = [S_i.F p1_mask(1:2, i)];
-    S_i.T = [S_i.T reshape(eye(3, 4), [12, 1])];
-end
+%% Initialize BA for CO
+% Hidden state for BA
+hidden_state.twists = [];
+hidden_state.landmarks = []; % the bootstrapped landmarks only serve as initial guesses to get the CO pipeline started. Good landmarks will be added in trackLandmarksKLT
+
+% Observation struct for BA
+observations.n = 0; % number of frames/poses
+observations.m = 0; % number of landmarks
+observations.O = []; % struct array
+
+%% Use bootstrapped keypoints as candidate keypoints
+S_i.C = [S_i.C p1_mask(1:2, :)];
+S_i.F = [S_i.F p1_mask(1:2, :)];
+S_i.T = [S_i.T repmat(reshape(eye(3, 4), [12, 1]), [1 size(p1_mask, 2)])];
 
 images = cell(bootstrap_frames(2) - 1, 1);
 
@@ -185,13 +194,13 @@ for i = 1:bootstrap_frames(2)
 
 end
 
-S_i = trackLandmarksKLT(S_i, images, [R_W_C2 t_W_C2], initArgs);
+[hidden_state, observations, S_i] = trackLandmarksKLT(S_i, images, [R_W_C2 t_W_C2], hidden_state, observations, initArgs);
 plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_truth);
 
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
-% last_frame = 20; % Testing
+last_frame = 20; % Testing
 
 range = (bootstrap_frames(2) + 1):last_frame;
 
@@ -217,14 +226,12 @@ for i = range
         assert(false);
     end
 
-    S_prev = S_i;
-
-    [S_i, T_WC_i] = processFrame(image, image_prev, S_i, continuousArgs);
+    [S_i, T_WC_i, hidden_state, observations] = processFrame(image, image_prev, S_i, hidden_state, observations, continuousArgs);
     images = cell(2, 1);
     images{1} = image_prev;
     images{2} = image;
 
-    S_i = trackLandmarksKLT(S_i, images, T_WC_i, continuousArgs);
+    [hidden_state, observations, S_i] = trackLandmarksKLT(S_i, images, T_WC_i, hidden_state, observations, continuousArgs);
 
     pos_hist = [pos_hist T_WC_i(:, 4)];
     n_tracked = length(S_i.X);
@@ -234,6 +241,11 @@ for i = range
     pause(.01);
 
 end
+
+% Run and plot BA
+hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
+hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
+plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
 
 pp_G_C = ground_truth(:, 1:length(pos_hist));
 
