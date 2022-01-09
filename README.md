@@ -66,14 +66,25 @@ custom_ds_path = 'data/undistorted_front_walk';
 * Camera: [Blackfly S USB3](https://www.flir.eu/products/blackfly-s-usb3/) with fish-eye lens.
 * Microcontroller:[Versavis board](https://github.com/ethz-asl/versavis)
 * PC: Ubuntu 18.04 with ROS Melodic 
+  
+![Hardware](img/Hardware1.jpeg)
 
 #### Recording and calibration 
-We recorded the dataset using [our fork](https://github.com/RobohouseHQ/versavis) of the Versavis framework. We secured the camera on a chair and wheeled it around the Student Project House to record our dataset as a rosbag.We used the [Kalibr](https://github.com/ethz-asl/kalibr/tree/fix/18.04) toolbox as is on a calibration recording with a checkerboard pattern to get the camera instrinsics and camera-IMU extrinsics. To undistort the images we used the [image_undistort](https://github.com/ethz-asl/image_undistort) ROS package. Finally, we used a python script to extract the data from the rosbags to use it in MATLAB.
-The calibration and dataset rosbags, as well as calibration parameters and the python extraction script are available can be [downloaded here](https://drive.google.com/file/d/1MV3-MhPpD8kvCPuly7KoNCw_j9cA4dab/view?usp=sharing)
+We recorded the dataset using [our fork](https://github.com/RobohouseHQ/versavis) of the Versavis framework. We secured the camera on a chair and wheeled it around the Student Project House to record our dataset as a rosbag. 
+  
+![Hardware](img/path.png)
+  
+We used the [Kalibr](https://github.com/ethz-asl/kalibr/tree/fix/18.04) toolbox as is on a calibration recording with a checkerboard pattern to get the camera instrinsics and camera-IMU extrinsics. To undistort the images we used the [image_undistort](https://github.com/ethz-asl/image_undistort) ROS package. Finally, we used a python script to extract the data from the rosbags to use it in MATLAB.
+
+ **The calibration and dataset rosbags, as well as calibration parameters and the python extraction script are available can be [downloaded here](https://drive.google.com/file/d/1MV3-MhPpD8kvCPuly7KoNCw_j9cA4dab/view?usp=sharing)**
 
 Our attempt at generating a validation (ground-truth) dataset using ROVIO can be found in [this fork](https://github.com/RobohouseHQ/rovio). Due to time constraints, we have not been able to improve on the out-of-the-box performance of ROVIO, which unfortunately had significant drift and could therefore not be used as ground truth. An example of ROVIO running on one of our custom Student Project House datasets can be found in the video below.
 
 [![ROVIO on custom DS](img/ROVIO_on_custom_ds.jpeg)](https://youtu.be/_WUWks9dkYk)
+  
+#### Results
+Video: 
+[![Our pipeline on custom DS](img/results_custom.png)]()
 
 <a name="contributors"><a/>
 ## Contributors
