@@ -61,4 +61,4 @@ malaga_path = 'data/malaga-urban-dataset-extract-07';
 
 <a name="license"><a/>
 ## License
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/antonioterpin/visual-odometry-mono/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License. Check the [LICENSE](LICENSE) file for details.
