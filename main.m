@@ -5,7 +5,9 @@ clc;
 path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
-ds = 3; % 0: KITTI, 1: Malaga, 2: parking
+
+%% User settings
+ds = 2; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
 malaga_path = 'data/malaga-urban-dataset-extract-07';
@@ -15,6 +17,7 @@ plot_ground_truth = false;
 
 rng(0)
 
+%% Dataset loading
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
     assert(exist('kitti_path', 'var') ~= 0);
@@ -167,8 +170,8 @@ observations.O = [struct('k', size(p2_mask, 2), 'p', p2_mask, 'l', 1:observation
 hidden_state_flat = [reshape(hidden_state.twists, 1, []), reshape(hidden_state.landmarks, 1, [])]';
 
 % Plot BA
-hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
-plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
+% hidden_state_refined = runBA(hidden_state_flat, observations, initArgs.K);
+% plotBAMap(hidden_state_flat, hidden_state_refined, observations, [0 40 -10 10]);
 
 for i = 1:size(p1_mask, 2)
     S_i.C = [S_i.C p1_mask(1:2, i)];
@@ -203,7 +206,9 @@ plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_tr
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
-%range = (bootstrap_frames(2) + 1):last_frame;
+
+% last_frame = 20; % Testing
+range = (bootstrap_frames(2) + 1):last_frame;
 
 for i = (bootstrap_frames(2)+1):1: last_frame
     %fprintf('\n\nProcessing frame %d\n=====================\n', i);
