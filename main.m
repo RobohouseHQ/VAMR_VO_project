@@ -219,7 +219,7 @@ for i = range
 
     S_prev = S_i;
 
-    [S_i, T_WC_i] = processFrame(image, image_prev, S_i, continuousArgs);
+    [S_i, T_WC_i] = estimateCameraPose(image, image_prev, S_i, continuousArgs);
     images = cell(2, 1);
     images{1} = image_prev;
     images{2} = image;
