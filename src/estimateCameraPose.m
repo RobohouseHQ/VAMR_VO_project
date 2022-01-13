@@ -1,4 +1,4 @@
-function [S_i, T_WC_i] = processFrame(img_i, img_prev, S_prev, args)
+function [S_i, T_WC_i] = estimateCameraPose(img_i, img_prev, S_prev, args)
     % update pose and pointcloud
     % img_i: image to obtain pose from
     % img_prev: image used to match descriptors with img_i

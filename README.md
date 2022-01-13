@@ -56,8 +56,13 @@ custom_ds_path = 'data/undistorted_front_walk';
 <!-- Link to screencasts for provided datasets and for custom dataset as well, do so by creating a link from a screenshot of the CO figs -->
 ### Provided Datasets
 #### KITTI
+[![VO on KITTI](img/Kitti_Trajectory_850.png)](https://youtu.be/bWwDb8NHPA8)
+
 #### Malaga
+[![VO on Malaga](img/Malaga_Trajectory.png)](https://youtu.be/W0WMp_IZUm4)
+
 #### Parking
+[![VO on Parking](img/Parking_Trajectory.png)](https://youtu.be/UbXol985Pug)
 
 ### Custom (self-recorded) dataset
 
@@ -81,10 +86,11 @@ We used the [Kalibr](https://github.com/ethz-asl/kalibr/tree/fix/18.04) toolbox 
 Our attempt at generating a validation (ground-truth) dataset using ROVIO can be found in [this fork](https://github.com/RobohouseHQ/rovio). Due to time constraints, we have not been able to improve on the out-of-the-box performance of ROVIO, which unfortunately had significant drift and could therefore not be used as ground truth. An example of ROVIO running on one of our custom Student Project House datasets can be found in the video below.
 
 [![ROVIO on custom DS](img/ROVIO_on_custom_ds.jpeg)](https://youtu.be/_WUWks9dkYk)
+
   
 #### Results
 Video: 
-[![Our pipeline on custom DS](img/results_custom.png)]()
+[![Our pipeline on custom DS](img/results_custom.png)](https://youtu.be/_GsoLh_7jjc)
 
 <a name="contributors"><a/>
 ## Contributors

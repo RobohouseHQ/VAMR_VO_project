@@ -135,7 +135,7 @@ p2 = [matched_keypoints_1(2, :); matched_keypoints_1(1, :); ones(1, length(match
 [E, mask, cameraParams] = determineEssentialMatrix(p1, p2, initArgs.K);
 
 %Determine final pose (with RANSAC)
-[R_C2_W, t_C2_W, t_W_C2, R_W_C2, p1_mask, p2_mask, P] = extractFinalPose (p1, p2, mask, E, initArgs.K);
+[R_C2_W, t_C2_W, t_W_C2, R_W_C2, p1_mask, p2_mask, P] = structureFromMotion (p1, p2, mask, E, initArgs.K);
 
 %Visualise the 3D scene
 % visualise3DScene(img0, img1, P, R_C2_W, t_C2_W, p1, p2)
@@ -238,7 +238,7 @@ for i = (bootstrap_frames(2)+1):1: last_frame
 
     S_prev = S_i;
 
-    [S_i, T_WC_i] = processFrame(image, image_prev, S_i, continuousArgs);
+    [S_i, T_WC_i] = estimateCameraPose(image, image_prev, S_i, continuousArgs);
     images = cell(2, 1);
     images{1} = image_prev;
     images{2} = image;

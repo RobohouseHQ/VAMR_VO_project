@@ -1,4 +1,4 @@
-function [R_C2_W, T_C2_W, T_W_C2, R_W_C2,p1_mask, p2_mask,P] = extractFinalPose (p1,p2,mask,E,K)
+function [R_C2_W, T_C2_W, T_W_C2, R_W_C2,p1_mask, p2_mask,P] = structureFromMotion (p1,p2,mask,E,K)
 
     % Extract the relative camera positions (R,T) from the essential matrix
 
