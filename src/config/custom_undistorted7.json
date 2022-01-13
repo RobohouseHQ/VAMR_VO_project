@@ -1,0 +1,54 @@
+{
+  "Init": {
+    "corner_patch_size": 15,
+    "harris_kappa": 0.15,
+    "num_keypoints": 1000,
+    "nonmaximum_supression_radius": 11,
+    "max_distance_new_lmk": 40,
+    "min_distance_new_lmk": 0,
+    "min_alpha_new_lmk": 0.1,
+    "K": [
+      [
+        317.2094821809144,
+        0,
+        633.5
+      ],
+      [
+        0,
+        317.2094821809144,
+        356.5
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ]
+  },
+  "CO": {
+    "corner_patch_size": 15,
+    "harris_kappa": 0.15,
+    "num_keypoints": 1000,
+    "nonmaximum_supression_radius": 11,
+    "max_distance_new_lmk": 40,
+    "min_distance_new_lmk": 1,
+    "min_alpha_new_lmk": 0.3,
+    "K": [
+      [
+        317.2094821809144,
+        0,
+        633.5
+      ],
+      [
+        0,
+        317.2094821809144,
+        356.5
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ]
+  }
+}

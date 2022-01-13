@@ -92,6 +92,7 @@ function S_i = trackLandmarksKLT(S, images, T_WC_i, args)
         T = [T reshape(T_WC_i, [12, 1])];
         C = [C keypoints_img(:, r)];
     end
+
     
     % This approach makes more sense but it doesn't work as well or isn't
     % suitable for the set of tuned params

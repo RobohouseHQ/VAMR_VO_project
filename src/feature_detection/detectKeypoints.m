@@ -6,7 +6,7 @@ function [keypoints] = detectKeypoints(img,args)
     keypoints = selectKeypoints(...
         harris_scores, args);
     
-    keypoints= flipud(keypoints)
+    keypoints= flipud(keypoints);
 
 
 end

@@ -5,11 +5,13 @@ clc;
 path(pathdef); % Reset paths
 addpath(genpath('src')); % Source code
 
+
 %% User settings
 ds = 2; % 0: KITTI, 1: Malaga, 2: parking
 parking_path = 'data/parking';
 kitti_path = 'data/kitti';
 malaga_path = 'data/malaga-urban-dataset-extract-07';
+custom_ds_path = 'data/undistorted_front_walk';
 plot_ground_truth = true;
 
 rng(0)
@@ -33,7 +35,6 @@ elseif ds == 1
     ground_truth = []; % gives GPS data
 
 elseif ds == 2
-
     % Path containing images, depths and all...
     %     assert(exist('datasets/parking', 'dir') ~= 0);
     last_frame = 598;
@@ -41,6 +42,11 @@ elseif ds == 2
 
     ground_truth = load([parking_path '/poses.txt']);
     ground_truth = ground_truth(:, [4 8 12])';
+elseif ds == 3
+    plot_ground_truth = false;
+    assert(exist('custom_ds_path', 'var') ~= 0);
+    last_frame = 729; 
+    ground_truth =[];
 else
     assert(false);
 end
@@ -69,7 +75,12 @@ elseif ds == 2
                             sprintf('/images/img_%05d.png', bootstrap_frames(1))]));
     img1 = rgb2gray(imread([parking_path ...
                             sprintf('/images/img_%05d.png', bootstrap_frames(2))]));
-
+elseif ds == 3
+    bootstrap_frames = [10 12];
+    img0 = imread([custom_ds_path '/images/' ...
+                    sprintf('%06d.png', bootstrap_frames(1))]);
+    img1 = imread([custom_ds_path '/images/' ...
+                    sprintf('%06d.png', bootstrap_frames(2))]);
 else
     assert(false);
 end
@@ -94,6 +105,9 @@ for i = 1:bootstrap_frames(2)
     elseif ds == 2
         img = rgb2gray(imread([parking_path ...
                                 sprintf('/images/img_%05d.png', i)]));
+    elseif ds == 3
+        img = imread([custom_ds_path '/images/' ...
+                    sprintf('%06d.png', i)]);
     else
         assert(false);
     end
@@ -179,6 +193,8 @@ for i = 1:bootstrap_frames(2)
     elseif ds == 2
         images{i} = im2uint8(rgb2gray(imread([parking_path ...
                                             sprintf('/images/img_%05d.png', i)])));
+    elseif ds == 3
+        images{i} = imread([custom_ds_path '/images/' sprintf('%06d.png', i)]);
     else
         assert(false);
     end
@@ -191,12 +207,12 @@ plotCO(S_i, images{1}, pos_hist, n_tracked_hist, 1, ground_truth, plot_ground_tr
 %Load tuning parameters for CO
 continuousArgs = readJson(ds).CO;
 
-% last_frame = 20; % Testing
 
+% last_frame = 20; % Testing
 range = (bootstrap_frames(2) + 1):last_frame;
 
-for i = range
-    fprintf('\n\nProcessing frame %d\n=====================\n', i);
+for i = (bootstrap_frames(2)+1):1: last_frame
+    %fprintf('\n\nProcessing frame %d\n=====================\n', i);
 
     if ds == 0
         image = imread([kitti_path '/05/image_0/' sprintf('%06d.png', i)]);
@@ -213,6 +229,9 @@ for i = range
                                         sprintf('/images/img_%05d.png', i)])));
         image_prev = im2uint8(rgb2gray(imread([parking_path ...
                                                 sprintf('/images/img_%05d.png', i - 1)])));
+    elseif ds == 3
+        image = imread([custom_ds_path '/images/' sprintf('%06d.png', i)]);
+        image_prev = imread([custom_ds_path '/images/' sprintf('%06d.png', i - 1)]);
     else
         assert(false);
     end
